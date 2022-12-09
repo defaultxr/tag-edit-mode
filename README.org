@@ -1,0 +1,58 @@
+#+TITLE: tag-edit
+
+An Emacs major mode to edit file tags (id3, vorbis, etc). Quickly and easily edit tags with the power of Emacs!
+
+* Features
+
+- Is a standard Emacs major mode, so keyboard macros, search/replace, etc work as expected.
+- Supports multiple "backends": ffmpeg, kid3, or possibly others in the future.
+- Not limited to just audio files; supports other file tag types when a supported backend is detected. (Though no others are implemented yet...)
+
+* Installation
+
+After installing tag-edit by putting its directory in your ~load-path~, type ~M-: (require 'tag-edit) RET~ to load it.
+
+# FIX: should it be (load-library ...) instead?
+
+# FIX: Maybe also add instructions for adding to init.el.
+
+* Usage
+
+After installing tag-edit, you can start editing tags with one of the following commands:
+
+- ~tag-edit~ - Prompt for a file or directory to edit. If a directory is selected, its contents are opened for editing.
+- ~dired-tag-edit~ - Edit the files marked in the current dired buffer, or the file under point if nothing is marked.
+
+Once you've opened files for editing, you will see the current tags for each file, as well as a standard list of tags that are always displayed for files (~tag-edit-standard-tags~). Tag-edit buffers support the following built-in bindings:
+
+- ~C-c C-c~ - Write the tags for the file under point.
+# FIX: C-x C-s is not implemented; should it be that key combination or a different one?
+- ~C-x C-s~ - Write the tags for all changed files in the current buffer.
+- ~C-c C-k~ - Revert the tags for the file under point back to what is currently saved in the file.
+
+- ~TAB~ - Collapse (or re-expand) the file under point.
+- ~M-p~ - Jump to the previous field.
+- ~M-n~ - Jump to the next field.
+- ~C-c C-p~ - Jump to the previous file in the buffer.
+- ~C-c C-n~ - Jump to the next file in the buffer.
+
+# FIX: we should probably just attempt to catch normal kill/yank and just ensure tag-edit makes them "do the right thing".
+# - ~C-c M-w~ - Copy the tags of the file under point to the kill ring.
+# - ~C-c C-w~ - Cut the tags of the file under point to the kill ring.
+# - ~C-c C-y~ - Paste tags from the kill ring to the file under point.
+
+# FIX: not implemented:
+- ~C-c C-t~ - Preview the file under point. Press again to stop the preview.
+- ~C-c C-o~ - Edit the file under point in an external editor.
+
+* Similar software
+
+** [[https://beets.io][beets]]
+"The music geek’s media organizer". Beets catalogs your collection, automatically improving its metadata as it goes using MusicBrainz or similar databases. Then it provides a bouquet of tools for manipulating and accessing your music. Because beets is designed as a library, it can do almost anything you can imagine for your music collection.
+
+Beets' [[https://beets.readthedocs.io/en/stable/plugins/edit.html][edit plugin]] adds the ability to edit tags of media files using a text editor of your choice. Unlike tag-edit, though, the plugin's interface is a lot more sparse (not specialized for Emacs) and less featureful.
+
+** [[https://kid3.kde.org/][kid3]]
+Media tag editor from the KDE project. If you want to easily tag multiple MP3, Ogg/Vorbis, FLAC, Monkey’s Audio, MPC, MP4/AAC, MP2, Opus, Speex, TrueAudio, WavPack, WMA/WMV, WAV and AIFF files (e.g. full albums) without typing the same information again and again and have control over both ID3v1 and ID3v2 tags, then Kid3 is the program you are looking for.
+
+Kid3 even has its own command line interface (which can be used as a backend by tag-edit), but it is not specialized for Emacs.
