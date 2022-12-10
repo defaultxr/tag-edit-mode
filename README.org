@@ -2,6 +2,8 @@
 
 An Emacs major mode to edit file tags (id3, vorbis, etc). Quickly and easily edit tags with the power of Emacs!
 
+*WARNING:* This is currently alpha-quality software; use at your own risk!
+
 * Features
 
 - Is a standard Emacs major mode, so keyboard macros, search/replace, etc work as expected.
