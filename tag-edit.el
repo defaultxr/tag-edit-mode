@@ -50,6 +50,11 @@
   :type '(or null function)
   :group 'tag-edit)
 
+(defcustom tag-edit-debug-log-path nil
+  "Where debug logs from external programs (such as ffmpeg) should be written, or nil to avoid writing logs."
+  :type '(or null file)
+  :group 'tag-edit)
+
 (defun tag-edit-file-tags-ffprobe (file)
   "Get an alist mapping the names of all tags detected in FILE to their values using ffprobe."
   (with-temp-buffer
@@ -144,17 +149,24 @@
   "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if OUTPUT-FILE is unspecified) with ffmpeg using its -metadata argument. Existing tags are kept, and only those specified in TAGS are changed. A tag is removed if its value in TAGS is empty.
 
 See also: `tag-edit-write-file-tags-via-ffmetadata'"
-  (apply #'call-process "ffmpeg" nil (list (current-buffer) "/tmp/ffmpeg-stderr.txt") nil
-         `(;; "-v" "quiet" ; verbosity
-           "-i" ,file ; input file
-           "-map" "0" ; do not alter the media content
-           "-y" ; overwrite existing file if one exists
-           "-codec" "copy" ; prevent unnecessary reencoding
-           ;; "-write_id3v2" "1" ; may sometimes be needed if ffmpeg can't guess the tag type
-           ,@(cl-loop for tag in tags
-                      unless (string= (first tag) "file")
-                      append (list "-metadata" (concat (first tag) "=" (second tag))))
-           ,(or output-file file))))
+  (let* ((output-file (or output-file file))
+         (replace-p (string= file output-file))
+         (temp-file-name (concat (file-name-directory output-file) ".out-" (file-name-nondirectory output-file))))
+    (apply #'call-process "ffmpeg" nil tag-edit-debug-log-path nil
+           `(;; "-v" "quiet" ; verbosity
+             "-i" ,file ; input file
+             "-map" "0" ; do not alter the media content
+             "-y" ; overwrite existing file if one exists
+             "-codec" "copy" ; prevent unnecessary reencoding
+             ;; "-write_id3v2" "1" ; may sometimes be needed if ffmpeg can't guess the tag type
+             ,@(cl-loop for tag in tags
+                        unless (string= (first tag) "file")
+                        append (list "-metadata" (concat (first tag) "=" (second tag))))
+             ,(if replace-p
+                  temp-file-name
+                output-file)))
+    (when replace-p
+      (rename-file temp-file-name output-file t))))
 
 (defun tag-edit-write-ffmpeg-metadata-txt (tags filename)
   "Write the TAGS alist to FILENAME in ffmpeg's ffmetadata format."
