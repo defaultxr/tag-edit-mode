@@ -181,9 +181,10 @@ See also: `tag-edit-write-file-tags-via-ffmetadata'"
     (write-file filename)))
 
 (defun tag-edit-write-file-tags-via-ffmetadata (file tags &optional output-file)
-  "Write TAGS to FILE using ffmpeg's \"ffmetadata\" text format."
-  (let ((metadata-file "/tmp/metadata-out.txt")
-        (output-file (or output-file file)))
+  "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if OUTPUT-FILE is unspecified) with ffmpeg using its \"ffmetadata\" text format. Existing tags are kept, and only those specified in TAGS are changed. A tag is removed if its value in TAGS is empty.
+
+See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
+  (let ((metadata-file "/tmp/metadata-out.txt"))
     (tag-edit-write-ffmpeg-metadata-txt tags metadata-file)
     (call-process "ffmpeg" nil (current-buffer) nil
                   "-v" "quiet" ; verbosity
@@ -195,7 +196,7 @@ See also: `tag-edit-write-file-tags-via-ffmetadata'"
                   ;; "-metadata"
                   "-f" "ffmetadata"
                   "-i" metadata-file
-                  output-file)))
+                  (or output-file file))))
 
 ;;; id3.el
 ;; https://github.com/larsmagne/id3.el
