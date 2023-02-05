@@ -208,9 +208,11 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
 (defun tag-edit-write-file-tags ()
   "Write the tags for the file at point."
   (interactive)
-  (let* ((tags (tag-edit-tags-at-point))
+  (let* ((region (tag-edit-tags-at-point-region))
+         (tags (tag-edit-tags-at-point))
          (file (second (assoc "file" tags))))
-    (tag-edit-write-file-tags-via-ffmpeg-args file tags)))
+    (tag-edit-write-file-tags-via-ffmpeg-args file tags)
+    (pulse-momentary-highlight-region (first region) (second region))))
 
 (defun tag-edit-goto-file (file)
   "Move point to FILE in the current buffer."
