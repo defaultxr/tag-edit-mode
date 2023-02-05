@@ -293,10 +293,9 @@ See also: `tag-edit-dired-file-at-point', `tag-edit-dired', `tag-edit'"
 
 See also: `tag-edit-dired-marked', `tag-edit-dired', `tag-edit'"
   (interactive)
-  (let ((file (dired-file-name-at-point)))
-    (if file
-        (tag-edit (list file))
-      (error "No file at point."))))
+  (if-let ((file (dired-file-name-at-point)))
+      (tag-edit (list file))
+    (error "No file at point.")))
 
 (defun tag-edit-dired ()
   "Edit the tags of the files marked in this dired buffer, or if none are marked, edit the tags of the file at point.
