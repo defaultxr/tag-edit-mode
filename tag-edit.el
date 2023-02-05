@@ -156,20 +156,20 @@
 ;; - https://askubuntu.com/questions/1231115/ffmpeg-could-not-write-header-for-output-file-0-incorrect-codec-parameters
 
 (defun tag-edit-write-file-tags-via-ffmpeg-args (file tags &optional output-file)
-  "Write TAGS to FILE with ffmpeg using its -metadata argument. Existing tags are kept, and only those specified in TAGS are changed. A tag is removed if its value in TAGS is empty."
-  (let ((output-file "/home/modula/tmp/new.mp3" ;; (or output-file file)
-                     ))
-    (apply #'call-process "ffmpeg" nil (list (current-buffer) "/tmp/ffmpeg-stderr.txt") nil
-           (print `(;; "-v" "quiet" ; verbosity
-                    "-i" ,file ; input file
-                    "-map" "0" ; do not alter the media content
-                    "-y" ; overwrite existing file if one exists
-                    "-codec" "copy" ; prevent unnecessary reencoding
-                    ;; "-write_id3v2" "1" ; may sometimes be needed if ffmpeg can't guess the tag type
-                    ,@(cl-loop for tag in tags
-                               unless (string= (first tag) "file")
-                               append (list "-metadata" (concat (first tag) "=" (second tag))))
-                    ,output-file)))))
+  "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if OUTPUT-FILE is unspecified) with ffmpeg using its -metadata argument. Existing tags are kept, and only those specified in TAGS are changed. A tag is removed if its value in TAGS is empty.
+
+See also: `tag-edit-write-file-tags-via-ffmetadata'"
+  (apply #'call-process "ffmpeg" nil (list (current-buffer) "/tmp/ffmpeg-stderr.txt") nil
+         `(;; "-v" "quiet" ; verbosity
+           "-i" ,file ; input file
+           "-map" "0" ; do not alter the media content
+           "-y" ; overwrite existing file if one exists
+           "-codec" "copy" ; prevent unnecessary reencoding
+           ;; "-write_id3v2" "1" ; may sometimes be needed if ffmpeg can't guess the tag type
+           ,@(cl-loop for tag in tags
+                      unless (string= (first tag) "file")
+                      append (list "-metadata" (concat (first tag) "=" (second tag))))
+           ,(or output-file file))))
 
 (defun tag-edit-write-ffmpeg-metadata-txt (tags filename)
   "Write the TAGS alist to FILENAME in ffmpeg's ffmetadata format."
