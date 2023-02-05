@@ -24,9 +24,6 @@
 
 ;;; Code:
 
-;; FIX
-;; ffmpeg -i 02\ Bad\ Apple.mp3 -map 0 -video_size 1000x1000 -y -codec copy -metadata "artist=HIHIHI" -metadata "title=Bar" new.mp3
-
 (defgroup tag-edit nil
   "Tag-Edit-Mode."
   :group 'external
@@ -91,8 +88,6 @@
       (insert "\n")
       (tag-edit-ui-element start (point) ro-msg))))
 
-;; (insert (propertize "foo" 'cursor-intangible t))
-
 (defun tag-edit-buffer-insert-file (file index)
   "Write the template for FILE in the current buffer, storing its data at INDEX in the buffer's data."
   (let ((file (expand-file-name file))
@@ -144,16 +139,6 @@
         res))))
 
 ;;; ffmpeg
-;; - https://blog.1a23.com/2020/03/16/read-and-write-tags-of-music-files-with-ffmpeg/
-;; - https://stackoverflow.com/questions/11706049/converting-video-formats-and-copying-tags-with-ffmpeg
-;; - https://www.youtube.com/watch?v=itwB1EP4aLc&list=PLeNS-EjH5Nr5h6HwS7bf-5BJOa2XolzHM&index=5
-;; - https://duckduckgo.com/?q=ffmpeg+could+not+write+header+for+output+file+incorrect+codec+parameters+mp3&t=vivaldi&ia=web
-;; - https://stackoverflow.com/questions/56791092/could-not-write-header-for-output-file-0-incorrect-codec-parameters-no-suc
-;; - https://stackoverflow.com/questions/61956549/could-not-write-header-for-output-file-0-incorrect-codec-parameters-broken
-;; - https://stackoverflow.com/questions/69378410/ffmpeg-could-not-write-header-for-output-file-0-incorrect-codec-parameters
-;; - https://trac.ffmpeg.org/wiki/Map
-;; - https://github.com/snobu/destreamer/issues/292
-;; - https://askubuntu.com/questions/1231115/ffmpeg-could-not-write-header-for-output-file-0-incorrect-codec-parameters
 
 (defun tag-edit-write-file-tags-via-ffmpeg-args (file tags &optional output-file)
   "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if OUTPUT-FILE is unspecified) with ffmpeg using its -metadata argument. Existing tags are kept, and only those specified in TAGS are changed. A tag is removed if its value in TAGS is empty.
@@ -336,7 +321,7 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
     (define-key map (kbd "C-c C-k") 'tag-edit-revert-file-tags) ; FIX
     
     (define-key map (kbd "TAB") 'tag-edit-toggle-file-visibility) ; FIX
-    (define-key map (kbd "M-n") 'tag-edit-next-field) ; goes to next step in the pattern, etc ; FIX
+    (define-key map (kbd "M-n") 'tag-edit-next-field) ; FIX
     (define-key map (kbd "M-p") 'tag-edit-previous-field) ; FIX
     (define-key map (kbd "C-c C-n") 'tag-edit-next-file)
     (define-key map (kbd "C-c C-p") 'tag-edit-previous-file)
@@ -346,7 +331,7 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
     map)
   "Keymap for `tag-edit-mode'.")
 
-;;; register the mode with emacs
+;;; define the mode
 
 ;;;###autoload
 (define-derived-mode tag-edit-mode emacs-lisp-mode "Tag-Edit"
