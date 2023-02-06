@@ -29,6 +29,8 @@
 
 ;;; Code:
 
+;; FIX: handle in-buffer errors when a tag can't be read (i.e. "-- failed to get tags ..."). should be handled by font-lock and by the tag-write functions
+
 ;;; customization
 
 (defgroup tag-edit nil
@@ -466,7 +468,7 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
 (define-derived-mode tag-edit-mode emacs-lisp-mode "Tag-Edit"
   "Major mode for editing file tags."
   (use-local-map tag-edit-mode-map)
-  ;; (add-to-list 'after-change-functions 'tag-edit-after-change-function)
+  ;; (add-to-list 'after-change-functions 'tag-edit-after-change-function) ; FIX: update header and set-buffer-modified-p
   (run-hooks 'tag-edit-mode-hook)
   (cursor-intangible-mode 1)
   (setq font-lock-defaults '(tag-edit-mode-font-lock))
