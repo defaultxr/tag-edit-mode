@@ -23,6 +23,8 @@ After installing tag-edit-mode, you can start editing tags with one of the follo
 - ~tag-edit~ - Prompt for a file or directory to edit. If a directory is selected, its contents are opened for editing.
 - ~dired-tag-edit~ - Edit the files marked in the current dired buffer, or the file under point if nothing is marked.
 
+** Bindings
+
 Once you've opened files for editing, you will see the current tags for each file, as well as a standard list of tags that are always displayed for files (~tag-edit-standard-tags~). Tag-edit-mode buffers support the following built-in bindings:
 
 - ~C-c C-c~ - Write the tags for the file under point.
@@ -43,7 +45,25 @@ Once you've opened files for editing, you will see the current tags for each fil
 - ~C-c C-t~ - Preview the file under point. Press again to stop the preview.
 - ~C-c C-o~ - Edit the file under point in an external editor.
 
-* Similar software
+** Shell Functions
+
+To easily call tag-edit-mode from your shell, you can define a function like so:
+
+*** Bash
+#+begin_src bash
+  tag-edit() {
+      emacsclient --eval "(tag-edit-directory \"$PWD/$1\")"
+  }
+#+end_src
+
+*** Fish
+#+begin_src fish
+  function tag-edit -d "Edit the media tags of the specified file in tag-edit-mode in Emacs."
+      emacsclient --eval "(tag-edit-directory \"$PWD/$argv[1]\")"
+  end
+#+end_src
+
+* Similar Software
 
 ** [[https://beets.io][beets]]
 "The music geek’s media organizer". Beets catalogs your collection, automatically improving its metadata as it goes using MusicBrainz or similar databases. Then it provides a bouquet of tools for manipulating and accessing your music. Because beets is designed as a library, it can do almost anything you can imagine for your music collection.
