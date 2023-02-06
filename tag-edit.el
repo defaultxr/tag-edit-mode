@@ -233,6 +233,7 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
 
 (defun tag-edit-write-all-file-tags ()
   "Write the tags for all files in the current buffer."
+  (interactive)
   (save-excursion
     (maphash (lambda (index value)
                (tag-edit-goto-file (second (assoc "file" value)))
