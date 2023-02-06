@@ -229,7 +229,7 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
   "Move point to the file at INDEX in the current buffer."
   (if-let ((tags (gethash index tag-edit-files-original-tags)))
       (tag-edit-goto-file (second (assoc "file" tags)))
-    (error "No file at index %d" index)))
+    (user-error "No file at index %d" index)))
 
 (defun tag-edit-write-all-file-tags ()
   "Write the tags for all files in the current buffer."
