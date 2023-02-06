@@ -29,6 +29,8 @@
 
 ;;; Code:
 
+;;; customization
+
 (defgroup tag-edit nil
   "Tag-Edit-Mode."
   :group 'external
@@ -208,15 +210,12 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
                   "-i" metadata-file
                   (or output-file file))))
 
-;;; id3.el
-;; https://github.com/larsmagne/id3.el
+;; other possible backends:
+;; - id3.el - https://github.com/larsmagne/id3.el
+;; - tag.el - https://www.emacswiki.org/emacs/FileTagUpdate
+;; - kid3-cli - https://docs.kde.org/trunk5/en/kid3/kid3/kid3-cli.html
 
-;;; tag.el
-;; https://www.emacswiki.org/emacs/FileTagUpdate
-
-;;; kid3-cli
-
-;;; 
+;;; interactive commands
 
 (defun tag-edit-write-file-tags ()
   "Write the tags for the file at point."
@@ -266,7 +265,6 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
     (delete-region (first region) (+ 2 (second region)))
     (tag-edit-buffer-insert-file file index)))
 
-;; FIX: should it just "dwim" if we're in a dired buffer?
 (defun tag-edit-files (files &optional recursive-p)
   "Open a buffer to edit the tags of FILES. If a file is a directory, its containing files are added. If RECURSIVE-P is true, also add the contents of any directories found within those directories, and so on."
   (interactive "f")
