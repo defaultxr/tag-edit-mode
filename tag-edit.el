@@ -34,7 +34,6 @@
   :group 'external
   :prefix "tag-edit-")
 
-;; FIX: this should be symbols
 (defcustom tag-edit-standard-tags (list "file" "title" "artist" "album" "comment" "date" "track" "genre" "album_artist")
   "Ordered list of tag names that should always be shown for files."
   :type '(list)
