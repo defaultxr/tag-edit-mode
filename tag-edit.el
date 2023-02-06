@@ -59,18 +59,6 @@
   :type '(or null file)
   :group 'tag-edit)
 
-(defun tag-edit-file-tags-ffprobe (file)
-  "Get an alist mapping the names of all tags detected in FILE to their values using ffprobe."
-  (with-temp-buffer
-    (call-process "ffprobe" nil (current-buffer) nil "-v" "quiet" "-print_format" "json" "-show_format" "-show_streams" file)
-    (goto-char (point-min))
-    (when-let* ((data (json-parse-buffer))
-                (format (gethash "format" data))
-                (tags (gethash "tags" format)))
-      (list* (list "file" file)
-             (cl-loop for tag in (hash-table-keys tags)
-                      collect (list tag (gethash tag tags)))))))
-
 (defun tag-edit-file-tags (file)
   "Get an alist mapping the names of all tags detected in FILE to their values."
   (tag-edit-file-tags-ffprobe file))
@@ -148,6 +136,18 @@
         res))))
 
 ;;; ffmpeg
+
+(defun tag-edit-file-tags-ffprobe (file)
+  "Get an alist mapping the names of all tags detected in FILE to their values using ffprobe."
+  (with-temp-buffer
+    (call-process "ffprobe" nil (current-buffer) nil "-v" "quiet" "-print_format" "json" "-show_format" "-show_streams" file)
+    (goto-char (point-min))
+    (when-let* ((data (json-parse-buffer))
+                (format (gethash "format" data))
+                (tags (gethash "tags" format)))
+      (list* (list "file" file)
+             (cl-loop for tag in (hash-table-keys tags)
+                      collect (list tag (gethash tag tags)))))))
 
 (defun tag-edit-write-file-tags-via-ffmpeg-args (file tags &optional output-file)
   "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if OUTPUT-FILE is unspecified) with ffmpeg using its -metadata argument. Existing tags are kept, and only those specified in TAGS are changed. A tag is removed if its value in TAGS is empty.
