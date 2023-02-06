@@ -61,6 +61,16 @@
   :type '(or null file)
   :group 'tag-edit)
 
+(defcustom tag-edit-audio-player "mpv"
+  "The default audio player to use for the `tag-edit-preview-file' command."
+  :type '(or string (file :must-match t))
+  :group 'tag-edit)
+
+(defcustom tag-edit-external-editor "kid3"
+  "The default external tag editor to use for the `tag-edit-open-file-in-external-editor' command."
+  :type '(or string (file :must-match t))
+  :group 'tag-edit)
+
 ;;; utility
 
 (defvar tag-edit-tag-name-regexp "^\\([^:]+:\\) "
@@ -265,6 +275,66 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
     (delete-region (first region) (+ 2 (second region)))
     (tag-edit-buffer-insert-file file index)))
 
+(defun tag-edit-toggle-file-visibility () ; FIX: implement
+  "Toggle the visibility of the tags of the file at point."
+  (interactive)
+  (user-error "This command is not yet implemented."))
+
+(defun tag-edit-next-field (&optional n)
+  "Go to the Nth next field in the buffer."
+  (interactive "p")
+  (search-forward-regexp tag-edit-tag-name-regexp nil t (or n 1)))
+
+(defun tag-edit-previous-field (&optional n)
+  "Go to the Nth previous field in the buffer."
+  (interactive "p")
+  (tag-edit-next-field (- (or n 1))))
+
+(defun tag-edit-next-file (&optional n)
+  "Go to the Nth next file in the buffer."
+  (interactive "p")
+  (search-forward-regexp "^file: " nil t (or n 1)))
+
+(defun tag-edit-previous-file (&optional n)
+  "Go to the Nth previous file in the buffer."
+  (interactive "p")
+  (beginning-of-line)
+  (tag-edit-next-file (- (or n 1))))
+
+(defvar tag-edit-preview-file-process nil
+  "The process of the audio preview started by `tag-edit-preview-file'.")
+
+(defun tag-edit-stop-preview ()
+  "Stop the audio preview started by `tag-edit-preview-file'."
+  (interactive)
+  (kill-process tag-edit-preview-file-process)
+  (setf tag-edit-preview-file-process nil))
+
+(defun tag-edit-preview-file (&optional file player)
+  "Play the file under point in an audio player. If a preview for this file is already playing, stop the preview."
+  (interactive)
+  (let* ((file (or file (tag-edit-file-under-point)))
+         (player (or player tag-edit-audio-player))
+         (should-play (or (null tag-edit-preview-file-process)
+                          (not (equal (process-get tag-edit-preview-file-process 'filename) file))
+                          (not (process-live-p tag-edit-preview-file-process)))))
+    (when (and tag-edit-preview-file-process
+               (process-live-p tag-edit-preview-file-process))
+      (tag-edit-stop-preview))
+    (when should-play
+      (setf tag-edit-preview-file-process (start-process "tag-edit-file-preview" nil player file))
+      (process-put tag-edit-preview-file-process 'filename file)
+      (set-process-sentinel tag-edit-preview-file-process
+                            (lambda (process event)
+                              (when (string= "finished\n" event)
+                                (setf tag-edit-preview-file-process nil))))
+      (message "Previewing %s. Call `tag-edit-stop-preview' or press C-c C-t on this file again to stop."))))
+
+(defun tag-edit-open-file-in-external-editor (&optional file editor)
+  "Open FILE (or the file under point if not specified) in EDITOR, or `tag-edit-external-editor'."
+  (interactive)
+  (start-process "tag-edit-external-editor" nil (or editor tag-edit-external-editor) (or file (tag-edit-file-under-point))))
+
 (defun tag-edit-files (files &optional recursive-p)
   "Open a buffer to edit the tags of FILES. If a file is a directory, its containing files are added. If RECURSIVE-P is true, also add the contents of any directories found within those directories, and so on."
   (interactive "f")
@@ -369,14 +439,14 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
     (define-key map (kbd "C-x C-s") 'tag-edit-write-all-file-tags)
     (define-key map (kbd "C-c C-k") 'tag-edit-revert-file-tags)
     
-    (define-key map (kbd "TAB") 'tag-edit-toggle-file-visibility) ; FIX
-    (define-key map (kbd "M-n") 'tag-edit-next-field) ; FIX
-    (define-key map (kbd "M-p") 'tag-edit-previous-field) ; FIX
+    (define-key map (kbd "TAB") 'tag-edit-toggle-file-visibility)
+    (define-key map (kbd "M-n") 'tag-edit-next-field)
+    (define-key map (kbd "M-p") 'tag-edit-previous-field)
     (define-key map (kbd "C-c C-n") 'tag-edit-next-file)
     (define-key map (kbd "C-c C-p") 'tag-edit-previous-file)
 
-    (define-key map (kbd "C-c C-t") 'tag-edit-preview-file) ; FIX
-    (define-key map (kbd "C-c C-o") 'tag-edit-open-file-in-external-editor) ; FIX
+    (define-key map (kbd "C-c C-t") 'tag-edit-preview-file)
+    (define-key map (kbd "C-c C-o") 'tag-edit-open-file-in-external-editor)
     map)
   "Keymap for `tag-edit-mode'.")
 
