@@ -63,6 +63,10 @@
   "Get an alist mapping the names of all tags detected in FILE to their values."
   (tag-edit-file-tags-ffprobe file))
 
+(defun tag-edit-file-under-point ()
+  "Get the filename of the file under point."
+  (second (assoc "file" (tag-edit-file-tags))))
+
 (defvar tag-edit-files-original-tags nil
   "The hash table mapping the index of the file in the current buffer to its original tags.")
 (make-variable-buffer-local 'tag-edit-files-original-tags)
@@ -214,7 +218,7 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
   (interactive)
   (let* ((region (tag-edit-tags-at-point-region))
          (tags (tag-edit-tags-at-point))
-         (file (second (assoc "file" tags))))
+         (file (tag-edit-file-under-point)))
     (tag-edit-write-file-tags-via-ffmpeg-args file tags)
     (pulse-momentary-highlight-region (first region) (second region))))
 
@@ -251,7 +255,7 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
   (let* ((inhibit-read-only t)
          (region (tag-edit-tags-at-point-region))
          (tags (tag-edit-tags-at-point))
-         (file (second (assoc "file" tags)))
+         (file (tag-edit-file-under-point))
          (index (tag-edit-current-index)))
     (goto-char (first region))
     (delete-region (first region) (+ 2 (second region)))
