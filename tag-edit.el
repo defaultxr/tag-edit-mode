@@ -3,7 +3,12 @@
 ;; Copyright (C) 2022 modula t.
 
 ;; Author: modula t. <defaultxr at gmail dot com>
+;; Homepage: https://github.com/defaultxr/tag-edit-mode
 ;; Keywords: files, multimedia, tools
+;; Version: 0.1
+;; Package-Requires: ((emacs "24.4"))
+
+;; This file is not part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
