@@ -370,6 +370,16 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
       (tag-edit-buffer-insert-files files)
       (goto-char (point-min)))))
 
+(defun tag-edit-directory (&optional directory-or-file)
+  "Edit the tags of the files in DIRECTORY-OR-FILE. If a file is specified, edit the tags of all files in its directory, placing the point on the specified one."
+  (interactive)
+  (let ((directory-p (file-directory-p directory-or-file)))
+    (tag-edit-files (if directory-p
+                        directory-or-file
+                      (file-name-directory directory-or-file)))
+    (unless directory-p
+      (tag-edit-goto-file directory-or-file))))
+
 (defun tag-edit (&optional files)
   "Edit the tags of FILES. If no files are provided, attempt to \"do what you mean\"; editing either the marked files or file at point if we're in a dired buffer, or prompting the user for a file if we're not."
   (interactive)
