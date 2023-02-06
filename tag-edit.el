@@ -220,8 +220,10 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
 
 (defun tag-edit-goto-file (file)
   "Move point to FILE in the current buffer."
-  (goto-point (point-min))
-  (search-forward (concat "file: " (second (assoc "file" tags)))))
+  (goto-char (point-min))
+  (if (search-forward (concat "file: " file) nil t)
+      (beginning-of-line)
+    (user-error "Could not find file %s in the current buffer." file)))
 
 (defun tag-edit-goto-index (index)
   "Move point to the file at INDEX in the current buffer."
