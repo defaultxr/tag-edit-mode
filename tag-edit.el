@@ -59,6 +59,11 @@
   :type '(or null file)
   :group 'tag-edit)
 
+;;; utility
+
+(defvar tag-edit-tag-name-regexp "^\\([^:]+:\\) "
+  "The regular expression matching the names of tags in the buffer.")
+
 (defun tag-edit-file-tags (file)
   "Get an alist mapping the names of all tags detected in FILE to their values."
   (tag-edit-file-tags-ffprobe file))
@@ -133,7 +138,7 @@
       (apply #'narrow-to-region (tag-edit-tags-at-point-region))
       (goto-char (point-min))
       (let (res)
-        (while (search-forward-regexp "^\\([^:]+?\\): \\(.+\\)$" nil t)
+        (while (search-forward-regexp (concat tag-edit-tag-name-regexp "\\(.+\\)$") nil t)
           (push (list (match-string-no-properties 1)
                       (match-string-no-properties 2))
                 res))
@@ -356,7 +361,7 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
   :group 'tag-edit)
 
 (defvar tag-edit-mode-font-lock
-  `(("^\\([^:]+:\\) " 1 'tag-edit-mode-tag-name-face)))
+  `((,tag-edit-tag-name-regexp 1 'tag-edit-mode-tag-name-face)))
 
 ;;; keymap
 
