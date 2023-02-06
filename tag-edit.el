@@ -346,8 +346,13 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
 
 ;;; font-lock
 
-;; (font-lock-add-keywords 'tag-edit-mode '(("^[^:]+?:" . 'font-lock-constant-face)))
-;; keyword constant string builtin function-name
+(defface tag-edit-mode-tag-name-face
+  '((t :inherit font-lock-type-face :weight bold))
+  "Face used to highlight the nick of the user acting or speaking."
+  :group 'tag-edit)
+
+(defvar tag-edit-mode-font-lock
+  `(("^\\([^:]+:\\) " 1 'tag-edit-mode-tag-name-face)))
 
 ;;; keymap
 
@@ -377,6 +382,7 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
   ;; (add-to-list 'after-change-functions 'tag-edit-after-change-function)
   (run-hooks 'tag-edit-mode-hook)
   (cursor-intangible-mode 1)
+  (setq font-lock-defaults '(tag-edit-mode-font-lock))
   (tag-edit-update-header))
 
 (provide 'tag-edit)
