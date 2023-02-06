@@ -231,6 +231,11 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
       (tag-edit-goto-file (second (assoc "file" tags)))
     (user-error "No file at index %d" index)))
 
+(defun tag-edit-current-index ()
+  "Get the index of the file under point."
+  (when-let ((matches (count-matches "^file: " (point-min) (point))))
+    (1- matches)))
+
 (defun tag-edit-write-all-file-tags ()
   "Write the tags for all files in the current buffer."
   (interactive)
@@ -239,6 +244,18 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
                (tag-edit-goto-file (second (assoc "file" value)))
                (tag-edit-write-file-tags))
              tag-edit-files-original-tags)))
+
+(defun tag-edit-revert-file-tags ()
+  "Revert the tags of the file under point to the ones currently in the file."
+  (interactive)
+  (let* ((inhibit-read-only t)
+         (region (tag-edit-tags-at-point-region))
+         (tags (tag-edit-tags-at-point))
+         (file (second (assoc "file" tags)))
+         (index (tag-edit-current-index)))
+    (goto-char (first region))
+    (delete-region (first region) (+ 2 (second region)))
+    (tag-edit-buffer-insert-file file index)))
 
 ;; FIX: should it just "dwim" if we're in a dired buffer?
 (defun tag-edit-files (files &optional recursive-p)
@@ -338,7 +355,7 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
   (let ((map (make-sparse-keymap "Tag-Edit-Mode")))
     (define-key map (kbd "C-c C-c") 'tag-edit-write-file-tags)
     (define-key map (kbd "C-x C-s") 'tag-edit-write-all-file-tags)
-    (define-key map (kbd "C-c C-k") 'tag-edit-revert-file-tags) ; FIX
+    (define-key map (kbd "C-c C-k") 'tag-edit-revert-file-tags)
     
     (define-key map (kbd "TAB") 'tag-edit-toggle-file-visibility) ; FIX
     (define-key map (kbd "M-n") 'tag-edit-next-field) ; FIX
