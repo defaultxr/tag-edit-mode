@@ -1,11 +1,11 @@
-;;; tag-edit.el --- major mode for editing file tags  -*- lexical-binding: t; -*-
+;;; tag-edit-mode.el --- major mode for editing file tags  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022 modula t.
 
 ;; Author: modula t. <defaultxr at gmail dot com>
 ;; Homepage: https://github.com/defaultxr/tag-edit-mode
 ;; Keywords: files, multimedia, tools
-;; Version: 0.1
+;; Version: 0.5
 ;; Package-Requires: ((emacs "24.4"))
 
 ;; This file is not part of GNU Emacs.
@@ -474,5 +474,5 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
   (setq font-lock-defaults '(tag-edit-mode-font-lock))
   (tag-edit-update-header))
 
-(provide 'tag-edit)
-;;; tag-edit.el ends here
+(provide 'tag-edit-mode)
+;;; tag-edit-mode.el ends here
