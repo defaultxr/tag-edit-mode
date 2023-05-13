@@ -12,6 +12,8 @@ An Emacs major mode to edit file tags (id3, vorbis, etc). Quickly and easily edi
 
 * Installation
 
+Ensure you have ~ffmpeg~ installed and in your ~$PATH~ so Emacs can find it, since tag-edit-mode requires it.
+
 After installing tag-edit-mode by putting its directory in your ~load-path~, type ~M-: (require 'tag-edit-mode) RET~ to load it.
 
 # FIX: Maybe also add instructions for adding to init.el.
