@@ -25,11 +25,18 @@
 
 ;;; Commentary:
 
-;; 
+;; Tag-Edit-Mode is a major mode to edit file tags (id3, vorbis, etc).
+;; Quickly and easily edit tags with the power of Emacs!
 
 ;;; Code:
 
 ;; FIX: handle in-buffer errors when a tag can't be read (i.e. "-- failed to get tags ..."). should be handled by font-lock and by the tag-write functions
+;; FIX: flac files have their tag names in all caps; tag-edit-mode doesn't detect this.
+;; FIX: implement imagemagick "identify -verbose image.png" to get metadata for images. exiftool might work too?
+;; FIX: maybe test with ERT (Emacs' unit test framework)?
+;; FIX: mark when a tag has unwritten changes
+;; FIX: also mark when a file has unwritten changes
+;; Emacs has exif-field and exif-tag-alist to get EXIF tags, but it doesn't allow them to be set.
 
 ;;; customization
 
@@ -291,7 +298,7 @@ See also: `tag-edit-revert-file-tags'"
 (defun tag-edit-toggle-file-visibility () ; FIX: implement
   "Toggle the visibility of the tags of the file at point."
   (interactive)
-  (user-error "This command is not yet implemented."))
+  (user-error "`tag-edit-toggle-file-visibility' is not yet implemented."))
 
 (defun tag-edit-next-field (&optional n)
   "Go to the Nth next field in the buffer."
@@ -304,12 +311,16 @@ See also: `tag-edit-revert-file-tags'"
   (tag-edit-next-field (- (or n 1))))
 
 (defun tag-edit-next-file (&optional n)
-  "Go to the Nth next file in the buffer."
+  "Move forward N files.
+
+See also: `tag-edit-previous-file'"
   (interactive "p")
   (search-forward-regexp "^file: " nil nil (or n 1)))
 
 (defun tag-edit-previous-file (&optional n)
-  "Go to the Nth previous file in the buffer."
+  "Move backward N files.
+
+See also: `tag-edit-next-file'"
   (interactive "p")
   (beginning-of-line)
   (tag-edit-next-file (- (or n 1))))
