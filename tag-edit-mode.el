@@ -363,18 +363,18 @@ See also: `tag-edit-next-file'"
   "Open a buffer to edit the tags of FILES. If a file is a directory, its containing files are added. If RECURSIVE-P is true, also add the contents of any directories found within those directories, and so on."
   (interactive "f")
   (cl-flet ((remap-dirs-to-contents (files)
-                                    "Replace each directory in FILES with a list of its contents, and return a list containing the new list as its first element and the number of directory replacements done as its second."
-                                    (let ((replacements 0))
-                                      (list
-                                       (mapcan (lambda (file)
-                                                 (if (file-directory-p file)
-                                                     (progn
-                                                       (setq replacements (1+ replacements))
-                                                       (directory-files file t "^[^.]"))
-                                                   (list file)))
-                                               files)
-                                       replacements))))
-    (let* ((buffer (generate-new-buffer "*tag-edit*"))
+              "Replace each directory in FILES with a list of its contents, and return a list containing the new list as its first element and the number of directory replacements done as its second."
+              (let ((replacements 0))
+                (list
+                 (mapcan (lambda (file)
+                           (if (file-directory-p file)
+                               (progn
+                                 (setq replacements (1+ replacements))
+                                 (directory-files file t "^[^.]"))
+                             (list file)))
+                         files)
+                 replacements))))
+    (let* ((buffer (generate-new-buffer "*tag-edit*")) ; FIX: more descriptive buffer name?
            (files (ensure-list files))
            (files (car (remap-dirs-to-contents files)))
            (files (if recursive-p
