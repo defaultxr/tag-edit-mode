@@ -323,7 +323,8 @@ See also: `tag-edit-previous-file'"
 See also: `tag-edit-next-file'"
   (interactive "p")
   (beginning-of-line)
-  (tag-edit-next-file (- (or n 1))))
+  (tag-edit-next-file (- (or n 1)))
+  (tag-edit-next-field))
 
 (defvar tag-edit-preview-file-process nil
   "The process of the audio preview started by `tag-edit-preview-file'.")
