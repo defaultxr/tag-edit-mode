@@ -306,7 +306,7 @@ See also: `tag-edit-revert-file-tags'"
 (defun tag-edit-next-file (&optional n)
   "Go to the Nth next file in the buffer."
   (interactive "p")
-  (search-forward-regexp "^file: " nil t (or n 1)))
+  (search-forward-regexp "^file: " nil nil (or n 1)))
 
 (defun tag-edit-previous-file (&optional n)
   "Go to the Nth previous file in the buffer."
