@@ -266,7 +266,9 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
              tag-edit-files-original-tags)))
 
 (defun tag-edit-revert-file-tags ()
-  "Revert the tags of the file under point to the ones currently in the file."
+  "Revert the tags of the file under point to the ones currently in the file.
+
+See also: `tag-edit-revert-all-file-tags'"
   (interactive)
   (let* ((inhibit-read-only t)
          (region (tag-edit-tags-at-point-region))
@@ -276,6 +278,15 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
     (goto-char (first region))
     (delete-region (first region) (+ 2 (second region)))
     (tag-edit-buffer-insert-file file index)))
+
+(defun tag-edit-revert-all-file-tags ()
+  "Revert the tags of all files in the buffer to the ones currently in their files.
+
+See also: `tag-edit-revert-file-tags'"
+  (interactive)
+  (goto-char (point-min))
+  (while (tag-edit-next-file)
+    (tag-edit-revert-file-tags)))
 
 (defun tag-edit-toggle-file-visibility () ; FIX: implement
   "Toggle the visibility of the tags of the file at point."
@@ -450,7 +461,8 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
     (define-key map (kbd "C-c C-c") 'tag-edit-write-file-tags)
     (define-key map (kbd "C-x C-s") 'tag-edit-write-all-file-tags)
     (define-key map (kbd "C-c C-k") 'tag-edit-revert-file-tags)
-    
+    (define-key map (kbd "C-c C-M-k") 'tag-edit-revert-file-tags)
+
     (define-key map (kbd "TAB") 'tag-edit-toggle-file-visibility)
     (define-key map (kbd "M-n") 'tag-edit-next-field)
     (define-key map (kbd "M-p") 'tag-edit-previous-field)

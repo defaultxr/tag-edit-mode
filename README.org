@@ -32,6 +32,7 @@ Once you've opened files for editing, you will see the current tags for each fil
 - ~C-c C-c~ - Write the tags for the file under point.
 - ~C-x C-s~ - Write the tags for all changed files in the current buffer.
 - ~C-c C-k~ - Revert the tags for the file under point back to what is currently saved in the file.
+- ~C-c C-M-k~ - Revert the tags for all files in the buffer.
 
 - ~TAB~ - Collapse (or re-expand) the file under point.
 - ~M-p~ - Jump to the previous field.
