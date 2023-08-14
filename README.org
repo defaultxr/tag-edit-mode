@@ -55,16 +55,14 @@ To easily call tag-edit-mode from your shell, you can define a function like so:
 *** Bash
 #+begin_src bash
   tag-edit() {
-      file=$(readlink -f "$1")
-      emacsclient --eval "(tag-edit-directory \"$file\")"
+      emacsclient --eval "(tag-edit-directory \"$(readlink -f "$1")\")"
   }
 #+end_src
 
 *** Fish
 #+begin_src fish
   function tag-edit -d "Edit the media tags of the specified file in tag-edit-mode in Emacs."
-      set file (readlink -f $argv[1])
-      emacsclient --eval "(tag-edit-directory \"file\")"
+      emacsclient --eval "(tag-edit-directory \"$(path resolve $argv[1])\")"
   end
 #+end_src
 
