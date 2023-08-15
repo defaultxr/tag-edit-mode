@@ -397,7 +397,7 @@ See also: `tag-edit-next-file'"
 
 (defun tag-edit-directory (&optional directory-or-file)
   "Edit the tags of the files in DIRECTORY-OR-FILE. If a file is specified, edit the tags of all files in its directory, placing the point on the specified one."
-  (interactive)
+  (interactive "D")
   (let ((directory-p (file-directory-p directory-or-file)))
     (tag-edit-files (if directory-p
                         directory-or-file
