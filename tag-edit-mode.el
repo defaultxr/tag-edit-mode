@@ -395,6 +395,11 @@ See also: `tag-edit-next-file'"
       (tag-edit-buffer-insert-files files)
       (goto-char (point-min)))))
 
+(defun tag-edit-file (file)
+  "Open a buffer to edit the tags of FILE."
+  (interactive "f")
+  (tag-edit-files (list file)))
+
 (defun tag-edit-directory (&optional directory-or-file)
   "Edit the tags of the files in DIRECTORY-OR-FILE. If a file is specified, edit the tags of all files in its directory, placing the point on the specified one."
   (interactive "D")
