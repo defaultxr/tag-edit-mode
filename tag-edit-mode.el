@@ -90,7 +90,7 @@
 
 ;;; utility
 
-(defvar tag-edit-tag-name-regexp "^\\([^:]+:\\) "
+(defvar tag-edit-tag-name-regexp "^\\([^:]+\\): "
   "The regular expression matching the names of tags in the buffer.")
 
 (defun tag-edit-file-tags (file)
