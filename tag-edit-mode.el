@@ -152,6 +152,7 @@
 (defun tag-edit-tags-at-point-region ()
   "Get the start and end position of the tags for the file at point."
   (list (save-excursion
+          (end-of-line)
           (search-backward-regexp "^file: ")
           (point))
         (save-excursion
