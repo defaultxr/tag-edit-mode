@@ -31,11 +31,19 @@
 ;;; Code:
 
 ;; FIX: handle in-buffer errors when a tag can't be read (i.e. "-- failed to get tags ..."). should be handled by font-lock and by the tag-write functions
+;; FIX: option to always write to a separate file (and another option to write to a separate file, then trash the originals before renaming the new file to the previous version's name)
+;; FIX: allow the user to specify backend preference (kid3-cli should be preferred by default). possibly warn when falling back to a non-preferred backend?
+;; FIX: backends should have the following information:
+;; - supported filetypes/tags
 ;; FIX: flac files have their tag names in all caps; tag-edit-mode doesn't detect this.
 ;; FIX: implement imagemagick "identify -verbose image.png" to get metadata for images. exiftool might work too?
 ;; FIX: maybe test with ERT (Emacs' unit test framework)?
 ;; FIX: mark when a tag has unwritten changes
 ;; FIX: also mark when a file has unwritten changes
+;; FIX: support viewing/setting images to tags
+;; FIX: better support for files with more than one "tag set"; i.e. support reading and writing both id3v1 and id3v2.
+;; FIX: also allow the user to specify behavior when writing files with more than one tag set. options should be: write only id3v2 and remove id3v1, write both id3v2 and v1, and ignore id3v1. possibly others?
+;; ;; FIX: make a function to go to a specified tag for the file under point
 ;; Emacs has exif-field and exif-tag-alist to get EXIF tags, but it doesn't allow them to be set.
 
 ;;; customization
@@ -50,12 +58,12 @@
   :type '(list)
   :group 'tag-edit)
 
-(defcustom tag-edit-remove-tags nil ; FIX
+(defcustom tag-edit-remove-tags nil ; FIX: implement
   "List of tags that should not be shown for files, and will be removed from them if the file's tags are written."
   :type '(list)
   :group 'tag-edit)
 
-(defcustom tag-edit-hidden-tags nil ; FIX
+(defcustom tag-edit-hidden-tags nil ; FIX: implement
   "List of tags that should not be shown for files, but whose value will be preserved if the file's tags are written."
   :type '(list)
   :group 'tag-edit)
@@ -232,7 +240,6 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
 ;; other possible backends:
 ;; - id3.el - https://github.com/larsmagne/id3.el
 ;; - tag.el - https://www.emacswiki.org/emacs/FileTagUpdate
-;; - kid3-cli - https://docs.kde.org/trunk5/en/kid3/kid3/kid3-cli.html
 
 ;;; interactive commands
 

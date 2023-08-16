@@ -4,10 +4,12 @@ An Emacs major mode to edit file tags (id3, vorbis, etc). Quickly and easily edi
 
 *WARNING:* This is currently beta-quality software; use at your own risk!
 
+*NOTE:* Currently, tag-edit-mode only supports one set of tags per file. So if a file has both id3v1 and id3v2, only id3v2 is read. If a file only has id3v1, id3v1 is read, but id3v2 is written.
+
 * Features
 
 - Is a standard Emacs major mode, so keyboard macros, search/replace, etc work as expected.
-- Supports multiple "backends": ffmpeg, kid3, or possibly others in the future.
+- Supports multiple "backends": kid3, ffmpeg, and possibly others in the future.
 - Not limited to just audio files; supports other file tag types when a supported backend is detected. (Though no others are implemented yet...)
 
 * Installation
