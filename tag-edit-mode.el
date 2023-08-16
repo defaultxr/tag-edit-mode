@@ -158,12 +158,12 @@
     (save-excursion
       (apply #'narrow-to-region (tag-edit-tags-at-point-region))
       (goto-char (point-min))
-      (let (res)
+      (let (result)
         (while (search-forward-regexp (concat tag-edit-tag-name-regexp "\\(.+\\)$") nil t)
           (push (list (match-string-no-properties 1)
                       (match-string-no-properties 2))
-                res))
-        res))))
+                result))
+        result))))
 
 ;;; ffmpeg
 
@@ -252,11 +252,11 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
       (beginning-of-line)
     (user-error "Could not find file %s in the current buffer." file)))
 
-(defun tag-edit-goto-index (index)
-  "Move point to the file at INDEX in the current buffer."
-  (if-let ((tags (gethash index tag-edit-files-original-tags)))
+(defun tag-edit-goto-file-number (n)
+  "Move point to the Nth file in the current buffer."
+  (if-let ((tags (gethash n tag-edit-files-original-tags)))
       (tag-edit-goto-file (second (assoc "file" tags)))
-    (user-error "No file at index %d" index)))
+    (user-error "No file at index %d" n)))
 
 (defun tag-edit-current-index ()
   "Get the index of the file under point."
@@ -382,9 +382,9 @@ See also: `tag-edit-next-file'"
                       (let ((found 1))
                         (while (> found 0)
                           (setq found 0)
-                          (let ((res (remap-dirs-to-contents files)))
-                            (setq found (second res)
-                                  files (first res))))
+                          (let ((result (remap-dirs-to-contents files)))
+                            (setq found (second result)
+                                  files (first result))))
                         files)
                     files))
            (files (if tag-edit-ignore-files-function
