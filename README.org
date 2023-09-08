@@ -52,6 +52,8 @@ Once you've opened files for editing, you will see the current tags for each fil
 
 ** Shell Functions
 
+# FIX: these functions should handle the user specifying more than one file.
+
 To easily call tag-edit-mode from your shell, you can define a function like so:
 
 *** Bash

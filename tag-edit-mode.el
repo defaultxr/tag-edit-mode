@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2022 modula t.
 
-;; Author: modula t. <defaultxr at gmail dot com>
+;; Author: modula t. <defaultxr at pm dot me>
 ;; Homepage: https://github.com/defaultxr/tag-edit-mode
 ;; Keywords: files, multimedia, tools
 ;; Version: 0.5
