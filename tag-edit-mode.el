@@ -88,6 +88,11 @@
   :type '(or string (file :must-match t))
   :group 'tag-edit)
 
+(defcustom tag-edit-pulse-on-save t
+  "Whether to pulse the file after saving its tags."
+  :type 'boolean
+  :group 'tag-edit)
+
 ;;; utility
 
 (defvar tag-edit-tag-name-regexp "^\\([^:]+\\): "
@@ -251,7 +256,8 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
          (tags (tag-edit-tags-at-point))
          (file (tag-edit-file-under-point)))
     (tag-edit-write-file-tags-via-ffmpeg-args file tags)
-    (pulse-momentary-highlight-region (first region) (second region))))
+    (when tag-edit-pulse-on-save
+      (pulse-momentary-highlight-region (first region) (second region)))))
 
 (defun tag-edit-goto-file (file)
   "Move point to FILE in the current buffer."
