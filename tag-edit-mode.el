@@ -198,8 +198,9 @@ their values using ffprobe (ffmpeg)."
                 (format (gethash "format" data))
                 (tags (gethash "tags" format)))
       (list* (list "file" file)
-             (cl-loop for tag in (hash-table-keys tags)
-                      collect (list tag (gethash tag tags)))))))
+             (mapcar (lambda (tag)
+                       (list tag (gethash tag tags)))
+                     (hash-table-keys tags))))))
 
 (defun tag-edit-write-file-tags-via-ffmpeg-args (file tags &optional output-file)
   "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if
