@@ -382,7 +382,7 @@ this file is already playing, stop the preview."
                               (ignore process)
                               (when (string= "finished\n" event)
                                 (setf tag-edit-preview-file-process nil))))
-      (message "Previewing %s. Call `tag-edit-stop-preview' or press C-c C-t on this file again to stop."))))
+      (message "Previewing %s. Call `tag-edit-stop-preview' or press C-c C-t on this file again to stop." file))))
 
 (defun tag-edit-open-file-in-external-editor (&optional file editor)
   "Open FILE (or the file under point if not specified) in EDITOR,
