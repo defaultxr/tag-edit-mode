@@ -508,7 +508,7 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
 ;;; define the mode
 
 ;;;###autoload
-(define-derived-mode tag-edit-mode emacs-lisp-mode "Tag-Edit"
+(define-derived-mode tag-edit-mode fundamental-mode "Tag-Edit"
   "Major mode for editing file tags."
   (use-local-map tag-edit-mode-map)
   ;; (add-to-list 'after-change-functions 'tag-edit-after-change-function) ; FIX: update header and set-buffer-modified-p
