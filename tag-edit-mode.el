@@ -59,32 +59,38 @@
   :group 'tag-edit)
 
 (defcustom tag-edit-remove-tags nil ; FIX: implement
-  "List of tags that should not be shown for files, and will be removed from them if the file's tags are written."
+  "List of tags that should not be shown for files, and will be
+removed from them if the file's tags are written."
   :type '(list)
   :group 'tag-edit)
 
 (defcustom tag-edit-hidden-tags nil ; FIX: implement
-  "List of tags that should not be shown for files, but whose value will be preserved if the file's tags are written."
+  "List of tags that should not be shown for files, but whose value
+will be preserved if the file's tags are written."
   :type '(list)
   :group 'tag-edit)
 
 (defcustom tag-edit-ignore-files-function nil
-  "Function that determines whether a file should be ignored when `tag-edit' is called on a directory."
+  "Function that determines whether a file should be ignored when
+`tag-edit' is called on a directory."
   :type '(or null function)
   :group 'tag-edit)
 
 (defcustom tag-edit-debug-log-path nil
-  "Where debug logs from external programs (such as ffmpeg) should be written, or nil to avoid writing logs."
+  "Where debug logs from external programs (such as ffmpeg) should
+be written, or nil to avoid writing logs."
   :type '(or null file)
   :group 'tag-edit)
 
 (defcustom tag-edit-audio-player "mpv"
-  "The default audio player to use for the `tag-edit-preview-file' command."
+  "The default audio player to use for the `tag-edit-preview-file'
+command."
   :type '(or string (file :must-match t))
   :group 'tag-edit)
 
 (defcustom tag-edit-external-editor "kid3"
-  "The default external tag editor to use for the `tag-edit-open-file-in-external-editor' command."
+  "The default external tag editor to use for the
+`tag-edit-open-file-in-external-editor' command."
   :type '(or string (file :must-match t))
   :group 'tag-edit)
 
@@ -106,13 +112,13 @@
   "Get the filename of the file under point."
   (second (assoc "file" (tag-edit-file-tags))))
 
-(defvar tag-edit-files-original-tags nil
-  "The hash table mapping the index of the file in the current buffer to its original tags.")
-(make-variable-buffer-local 'tag-edit-files-original-tags)
+(defvar-local tag-edit-files-original-tags nil
+  "The hash table mapping the index of the file in the current
+buffer to its original tags.")
 
 (defun tag-edit-ui-element (start end &optional ro-message additional-properties)
   "Write a tag-edit interface element to the current buffer, at point."
-  (let ((intangible (getf additional-properties additional-properties (gensym)))
+  (let ((intangible (cl-getf additional-properties additional-properties (gensym)))
         (props `(read-only ,(or ro-message "Cannot edit tag-edit template") ,@additional-properties)))
     (set-text-properties start (+ start 1) (list* 'cursor-intangible intangible props))
     (set-text-properties (+ start 1) (- end 1) (list* 'cursor-intangible intangible props))
@@ -129,7 +135,8 @@
       (tag-edit-ui-element start (point) ro-msg))))
 
 (defun tag-edit-buffer-insert-file (file index)
-  "Write the template for FILE in the current buffer, storing its data at INDEX in the buffer's data."
+  "Write the template for FILE in the current buffer, storing its
+data at INDEX in the buffer's data."
   (let ((file (expand-file-name file))
         (inhibit-read-only t)
         (file-tags (tag-edit-file-tags file)))
@@ -140,7 +147,7 @@
     (dolist (tag tag-edit-standard-tags)
       (tag-edit-buffer-insert-tag tag (second (assoc tag file-tags))))
     (dolist (tag file-tags)
-      (unless (find (first tag) tag-edit-standard-tags :test #'string=)
+      (unless (cl-find (first tag) tag-edit-standard-tags :test #'string=)
         (tag-edit-buffer-insert-tag (first tag) (second tag))))
     (insert "\n")))
 
@@ -182,7 +189,8 @@
 ;;; ffmpeg
 
 (defun tag-edit-file-tags-ffprobe (file)
-  "Get an alist mapping the names of all tags detected in FILE to their values using ffprobe."
+  "Get an alist mapping the names of all tags detected in FILE to
+their values using ffprobe (ffmpeg)."
   (with-temp-buffer
     (call-process "ffprobe" nil (current-buffer) nil "-v" "quiet" "-print_format" "json" "-show_format" "-show_streams" file)
     (goto-char (point-min))
@@ -194,7 +202,10 @@
                       collect (list tag (gethash tag tags)))))))
 
 (defun tag-edit-write-file-tags-via-ffmpeg-args (file tags &optional output-file)
-  "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if OUTPUT-FILE is unspecified) with ffmpeg using its -metadata argument. Existing tags are kept, and only those specified in TAGS are changed. A tag is removed if its value in TAGS is empty.
+  "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if
+OUTPUT-FILE is unspecified) with ffmpeg using its -metadata
+argument. Only tags specified in TAGS are changed. A tag is
+removed if its value in TAGS is empty or nil.
 
 See also: `tag-edit-write-file-tags-via-ffmetadata'"
   (let* ((output-file (or output-file file))
@@ -226,7 +237,10 @@ See also: `tag-edit-write-file-tags-via-ffmetadata'"
     (write-file filename)))
 
 (defun tag-edit-write-file-tags-via-ffmetadata (file tags &optional output-file)
-  "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if OUTPUT-FILE is unspecified) with ffmpeg using its \"ffmetadata\" text format. Existing tags are kept, and only those specified in TAGS are changed. A tag is removed if its value in TAGS is empty.
+  "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if
+OUTPUT-FILE is unspecified) with ffmpeg using its -metadata
+argument. Only tags specified in TAGS are changed. A tag is
+removed if its value in TAGS is empty or nil.
 
 See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
   (let ((metadata-file "/tmp/metadata-out.txt"))
@@ -293,7 +307,6 @@ See also: `tag-edit-revert-all-file-tags'"
   (interactive)
   (let* ((inhibit-read-only t)
          (region (tag-edit-tags-at-point-region))
-         (tags (tag-edit-tags-at-point))
          (file (tag-edit-file-under-point))
          (index (tag-edit-current-index)))
     (goto-char (first region))
@@ -350,7 +363,8 @@ See also: `tag-edit-next-file'"
   (setf tag-edit-preview-file-process nil))
 
 (defun tag-edit-preview-file (&optional file player)
-  "Play the file under point in an audio player. If a preview for this file is already playing, stop the preview."
+  "Play the file under point in an audio player. If a preview for
+this file is already playing, stop the preview."
   (interactive)
   (let* ((file (or file (tag-edit-file-under-point)))
          (player (or player tag-edit-audio-player))
@@ -365,20 +379,27 @@ See also: `tag-edit-next-file'"
       (process-put tag-edit-preview-file-process 'filename file)
       (set-process-sentinel tag-edit-preview-file-process
                             (lambda (process event)
+                              (ignore process)
                               (when (string= "finished\n" event)
                                 (setf tag-edit-preview-file-process nil))))
       (message "Previewing %s. Call `tag-edit-stop-preview' or press C-c C-t on this file again to stop."))))
 
 (defun tag-edit-open-file-in-external-editor (&optional file editor)
-  "Open FILE (or the file under point if not specified) in EDITOR, or `tag-edit-external-editor'."
+  "Open FILE (or the file under point if not specified) in EDITOR,
+or `tag-edit-external-editor'."
   (interactive)
   (start-process "tag-edit-external-editor" nil (or editor tag-edit-external-editor) (or file (tag-edit-file-under-point))))
 
 (defun tag-edit-files (files &optional recursive-p)
-  "Open a buffer to edit the tags of FILES. If a file is a directory, its containing files are added. If RECURSIVE-P is true, also add the contents of any directories found within those directories, and so on."
+  "Open a buffer to edit the tags of FILES. If a file is a
+directory, its containing files are added. If RECURSIVE-P is
+true, also add the contents of any directories found within those
+directories, and so on."
   (interactive "f")
   (cl-flet ((remap-dirs-to-contents (files)
-              "Replace each directory in FILES with a list of its contents, and return a list containing the new list as its first element and the number of directory replacements done as its second."
+              "Replace each directory in FILES with a list of its contents, and
+return a list containing the new list as its first element and
+the number of directory replacements done as its second."
               (let ((replacements 0))
                 (list
                  (mapcan (lambda (file)
@@ -415,7 +436,9 @@ See also: `tag-edit-next-file'"
   (tag-edit-files (list file)))
 
 (defun tag-edit-directory (&optional directory-or-file)
-  "Edit the tags of the files in DIRECTORY-OR-FILE. If a file is specified, edit the tags of all files in its directory, placing the point on the specified one."
+  "Edit the tags of the files in DIRECTORY-OR-FILE. If a file is
+specified, edit the tags of all files in its directory, placing
+the point on the specified one."
   (interactive "D")
   (let ((directory-p (file-directory-p directory-or-file)))
     (tag-edit-files (if directory-p
@@ -425,7 +448,10 @@ See also: `tag-edit-next-file'"
       (tag-edit-goto-file directory-or-file))))
 
 (defun tag-edit (&optional files)
-  "Edit the tags of FILES. If no files are provided, attempt to \"do what you mean\"; editing either the marked files or file at point if we're in a dired buffer, or prompting the user for a file if we're not."
+  "Edit the tags of FILES. If no files are provided, attempt to \"do
+what you mean\"; editing either the marked files or file at point
+if we're in a dired buffer, or prompting the user for a file if
+we're not."
   (interactive)
   (if files
       (tag-edit-files files)
@@ -455,7 +481,8 @@ See also: `tag-edit-dired-marked', `tag-edit-dired', `tag-edit'"
     (error "No file at point.")))
 
 (defun tag-edit-dired ()
-  "Edit the tags of the files marked in this dired buffer, or if none are marked, edit the tags of the file at point.
+  "Edit the tags of the files marked in this dired buffer, or if
+none are marked, edit the tags of the file at point.
 
 See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
   (interactive)
