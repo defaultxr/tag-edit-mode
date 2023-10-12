@@ -106,15 +106,26 @@ command."
 
 (defun tag-edit-file-tags (file)
   "Get an alist mapping the names of all tags detected in FILE to their values."
-  (tag-edit-file-tags-ffprobe file))
+  (funcall (tag-edit-backend-read-function) file))
 
-(defun tag-edit-file-under-point ()
+(defun tag-edit-file-at-point ()
   "Get the filename of the file under point."
-  (second (assoc "file" (tag-edit-file-tags))))
+  (second (assoc "file" (tag-edit-tags-at-point))))
+
+(defun tag-edit-file-at-point-number ()
+  "Get the index of the file under point."
+  (1- (count-matches "^file: " (point-min) (point))))
 
 (defvar-local tag-edit-files-original-tags nil
   "The hash table mapping the index of the file in the current
 buffer to its original tags.")
+
+(defun tag-edit-file-original-tags (&optional file)
+  (let ((file (or file (tag-edit-file-at-point-number))))
+    (if (integerp file)
+        (gethash file tag-edit-files-original-tags)
+      ;; FIX
+      )))
 
 (defun tag-edit-ui-element (start end &optional ro-message additional-properties)
   "Write a tag-edit interface element to the current buffer, at point."
@@ -186,9 +197,66 @@ data at INDEX in the buffer's data."
                 result))
         result))))
 
+(defvar-local tag-edit-unsaved-files nil
+  "List of files in the tag-edit-mode buffer with unsaved changes.")
+
+(defun tag-edit-after-change (beginning end length)
+  "Function called after a change is made to a tag-edit-mode buffer."
+  (ignore beginning end length)
+  ;; FIX:
+  ;; - compare text of tags in buffer to the original tags. if they aren't the same, add the filename to tag-edit-unsaved-files. if they are the same, ensure it is not in tag-edit-unsaved-files.
+  (when (eql major-mode 'tag-edit-mode)
+    (gethash (tag-edit-file-at-point-number) tag-edit-files-original-tags))
+  ;; - update header (?)
+  ;; (set-buffer-modified-p (> (length tag-edit-unsaved-files) 0))
+  )
+
+;;; kid3-cli
+
+(defun tag-edit--hash-table-alist (hash-table)
+  "Convert a hash table to an alist."
+  (let (result)
+    (maphash (lambda (key value)
+               (push (list key value) result))
+             hash-table)
+    result))
+
+(defun tag-edit-read-file-tags-with-kid3-cli (file)
+  "Get an alist mapping the names of all tags detected in FILE to
+their values using kid3-cli."
+  (let ((file (expand-file-name file)))
+    (with-temp-buffer
+      (call-process "kid3-cli" nil (current-buffer) nil "-c" "select" file "-c" "{\"method\":\"get\"}")
+      (goto-char (point-min))
+      (let* ((json (json-parse-buffer)) ; FIX: check if kid3-cli gave an error
+             (tagged-file (gethash "taggedFile" (gethash "result" json)))
+             (frames (gethash "frames" (or (gethash "tag2" tagged-file)
+                                           (gethash "tag1" tagged-file)))))
+        (cons (list "file" file)
+              (if (hash-table-p frames)
+                  (tag-edit--hash-table-alist frames)
+                (append (map 'vector (lambda (frame)
+                                       (list (gethash "name" frame) (gethash "value" frame)))
+                             frames)
+                        nil)))))))
+
+(defun tag-edit-write-file-tags-with-kid3-cli (file tags &optional output-file)
+  "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if
+OUTPUT-FILE is unspecified) using kid3-cli. Only tags specified
+in TAGS are changed. A tag is removed if its value in TAGS is
+empty or nil.
+
+See also: `tag-edit-write-file-tags'"
+  (when output-file
+    (copy-file file output-file))
+  (call-process "kid3-cli" nil "*kid3-cli-output*" nil "-c" "select" (or output-file file)
+                (cl-loop for tag in tags
+                         unless (string= (first tag) "file")
+                         append (list "-c" (concat "set " (first tag) " '" (s-replace "'" "\\'" (second tag)) "'")))))
+
 ;;; ffmpeg
 
-(defun tag-edit-file-tags-ffprobe (file)
+(defun tag-edit-read-file-tags-with-ffmpeg-ffprobe (file)
   "Get an alist mapping the names of all tags detected in FILE to
 their values using ffprobe (ffmpeg)."
   (with-temp-buffer
@@ -202,13 +270,34 @@ their values using ffprobe (ffmpeg)."
                        (list tag (gethash tag tags)))
                      (hash-table-keys tags))))))
 
-(defun tag-edit-write-file-tags-via-ffmpeg-args (file tags &optional output-file)
+(defun tag-edit-read-file-tags-with-ffmpeg-ffmetadata (file)
+  (let ((ffmetadata-file (make-temp-file "tag-edit-mode-ffmetadata-tmp-" nil ".txt"))
+        result)
+    (call-process "ffmpeg" nil nil nil "-y" "-i" file "-f" "ffmetadata" ffmetadata-file)
+    (with-temp-buffer
+      (insert-file-contents-literally ffmetadata-file)
+      (while (/= (point-max) (point))
+        (forward-line)
+        (let ((line (buffer-substring-no-properties (progn (beginning-of-line) (point))
+                                                    (save-excursion (end-of-line) (point)))))
+          ;; FIX: what does ffmetadata do when tag values contain newlines?
+          (when (s-contains-p "=" line)
+            (push (s-split-up-to "=" line 1) result))))
+      (delete-file ffmetadata-file)
+      result)))
+
+(defun tag-edit-read-file-tags-with-ffmpeg (file)
+  "Get an alist mapping the names of all tags detected in FILE to
+their values using ffmpeg."
+  (tag-edit-read-file-tags-with-ffmpeg-ffprobe file))
+
+(defun tag-edit-write-file-tags-with-ffmpeg-args (file tags &optional output-file) ; FIX: ensure that nil and empty tags are removed
   "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if
 OUTPUT-FILE is unspecified) with ffmpeg using its -metadata
 argument. Only tags specified in TAGS are changed. A tag is
 removed if its value in TAGS is empty or nil.
 
-See also: `tag-edit-write-file-tags-via-ffmetadata'"
+See also: `tag-edit-write-file-tags-with-ffmpeg-ffmetadata'"
   (let* ((output-file (or output-file file))
          (replace-p (string= file output-file))
          (temp-file-name (concat (file-name-directory output-file) ".out-" (file-name-nondirectory output-file))))
@@ -237,13 +326,34 @@ See also: `tag-edit-write-file-tags-via-ffmetadata'"
         (insert (first tag) "=" (second tag) "\n")))
     (write-file filename)))
 
-(defun tag-edit-write-file-tags-via-ffmetadata (file tags &optional output-file)
+(defun tag-edit-write-file-tags-with-ffmpeg-ffmetadata (file tags &optional output-file)
   "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if
 OUTPUT-FILE is unspecified) with ffmpeg using its -metadata
 argument. Only tags specified in TAGS are changed. A tag is
 removed if its value in TAGS is empty or nil.
 
-See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
+See also: `tag-edit-write-file-tags-with-ffmpeg-args'"
+  (ignore output-file) ; FIX?
+  (let ((ffmetadata-file (make-temp-file "tag-edit-mode-ffmetadata-tmp-" nil ".txt")))
+    ffmetadata-file
+    (tag-edit-write-ffmpeg-metadata-txt tags ffmetadata-file)
+    (call-process "ffmpeg" "-i" file "-f" "ffmetadata" ffmetadata-file)
+    (delete-file ffmetadata-file)))
+
+(defun tag-edit-write-file-tags-with-ffmpeg (file tags &optional output-file)
+  "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if
+OUTPUT-FILE is unspecified) with ffmpeg using its -metadata
+argument. Only tags specified in TAGS are changed. A tag is
+removed if its value in TAGS is empty or nil."
+  (tag-edit-write-file-tags-with-ffmpeg-args file tags output-file))
+
+(defun tag-edit-write-file-tags-with-ffmetadata (file tags &optional output-file)
+  "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if
+OUTPUT-FILE is unspecified) with ffmpeg using its \"ffmetadata\"
+text format. Existing tags are kept, and only those specified in
+TAGS are changed. A tag is removed if its value in TAGS is empty.
+
+See also: `tag-edit-write-file-tags-with-ffmpeg-args'"
   (let ((metadata-file "/tmp/metadata-out.txt"))
     (tag-edit-write-ffmpeg-metadata-txt tags metadata-file)
     (call-process "ffmpeg" nil (current-buffer) nil
@@ -262,15 +372,62 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
 ;; - id3.el - https://github.com/larsmagne/id3.el
 ;; - tag.el - https://www.emacswiki.org/emacs/FileTagUpdate
 
-;;; interactive commands
+;;; backend handling
+
+(defvar tag-edit-backends (list 'kid3-cli 'ffmpeg)
+  "List of backends supported by tag-edit-mode.")
+
+(defvar tag-edit--backend nil
+  "The active backend. If nil, attempt to auto-detect a backend, and
+error if none could be found. You shouldn't use this variable
+directly; instead, call `tag-edit-backend'.")
+
+(defun tag-edit-detect-backend ()
+  "Set `tag-edit-backend' to the first backend detected to be
+available. Backends are searched in order of preference;
+currently hardcoded to kid3-cli, then ffmpeg.
+
+Users should not need to call this manually unless they install a
+new backend, as tag-edit-mode will automatically run this
+function the first time a backend is needed."
+  (setq tag-edit--backend (cond ((executable-find "kid3-cli") 'kid3-cli)
+                                ((executable-find "ffmpeg") 'ffmpeg)
+                                (t 'none))))
+
+(defun tag-edit-backend (&optional backend)
+  "Get tag-edit-mode's current active backend. If BACKEND is
+provided and it is a valid backend, just return it."
+  (cond (backend
+         (if (member backend tag-edit-backends)
+             backend
+           (error "No known backend with name %s." backend)))
+        (tag-edit--backend tag-edit--backend)
+        (t
+         (let ((backend (tag-edit-detect-backend)))
+           (or backend
+               (error "Tag-edit-mode couldn't find any available backends. Try installing kid3-cli or ffmpeg and then call `tag-edit-detect-backend'."))))))
+
+(defun tag-edit-backend-read-function (&optional backend)
+  "Get the function used to read the tags of a file. If BACKEND is
+specified, use that backend for this invocation."
+  (let ((backend (tag-edit-backend backend)))
+    (intern (concat "tag-edit-read-file-tags-with-" (symbol-name backend)))))
+
+(defun tag-edit-backend-write-function (&optional backend)
+  "Get the function used to write the tags of a file. If BACKEND is
+specified, use that backend for this invocation."
+  (let ((backend (tag-edit-backend backend)))
+    (intern (concat "tag-edit-write-file-tags-with-" (symbol-name backend)))))
+
+;;; main interactive commands
 
 (defun tag-edit-write-file-tags ()
   "Write the tags for the file at point."
   (interactive)
   (let* ((region (tag-edit-tags-at-point-region))
          (tags (tag-edit-tags-at-point))
-         (file (tag-edit-file-under-point)))
-    (tag-edit-write-file-tags-via-ffmpeg-args file tags)
+         (file (tag-edit-file-at-point)))
+    (tag-edit-write-file-tags-with-ffmpeg-args file tags)
     (when tag-edit-pulse-on-save
       (pulse-momentary-highlight-region (first region) (second region)))))
 
@@ -292,14 +449,21 @@ See also: `tag-edit-write-file-tags-via-ffmpeg-args'"
   (when-let ((matches (count-matches "^file: " (point-min) (point))))
     (1- matches)))
 
-(defun tag-edit-write-all-file-tags ()
+(defun tag-edit-write-all-file-tags () ; FIX: may have an off-by-one error here; the first file doesn't seem to get written
   "Write the tags for all files in the current buffer."
   (interactive)
   (save-excursion
-    (maphash (lambda (index value)
-               (tag-edit-goto-file (second (assoc "file" value)))
-               (tag-edit-write-file-tags))
-             tag-edit-files-original-tags)))
+    (let* ((tag-edit-pulse-on-save nil)
+           (keys (sort (hash-table-keys tag-edit-files-original-tags) #'<))
+           (num-keys (length keys)))
+      (dolist (index keys)
+        (message "Writing tag for file %d of %d" index num-keys)
+        (tag-edit-goto-file-number index)
+        (unless (tag-edit-tags-equivalent (tag-edit-tags-at-point) ; FIX: define tag-edit-tags-equivalent
+                                          (gethash (tag-edit-file-at-point-number) tag-edit-files-original-tags))
+          (tag-edit-write-file-tags)))))
+  (set-buffer-modified-p nil)
+  (setf tag-edit-unsaved-files nil))
 
 (defun tag-edit-revert-file-tags ()
   "Revert the tags of the file under point to the ones currently in the file.
@@ -308,7 +472,7 @@ See also: `tag-edit-revert-all-file-tags'"
   (interactive)
   (let* ((inhibit-read-only t)
          (region (tag-edit-tags-at-point-region))
-         (file (tag-edit-file-under-point))
+         (file (tag-edit-file-at-point))
          (index (tag-edit-current-index)))
     (goto-char (first region))
     (delete-region (first region) (+ 2 (second region)))
@@ -367,7 +531,7 @@ See also: `tag-edit-next-file'"
   "Play the file under point in an audio player. If a preview for
 this file is already playing, stop the preview."
   (interactive)
-  (let* ((file (or file (tag-edit-file-under-point)))
+  (let* ((file (or file (tag-edit-file-at-point)))
          (player (or player tag-edit-audio-player))
          (should-play (or (null tag-edit-preview-file-process)
                           (not (equal (process-get tag-edit-preview-file-process 'filename) file))
@@ -389,7 +553,7 @@ this file is already playing, stop the preview."
   "Open FILE (or the file under point if not specified) in EDITOR,
 or `tag-edit-external-editor'."
   (interactive)
-  (start-process "tag-edit-external-editor" nil (or editor tag-edit-external-editor) (or file (tag-edit-file-under-point))))
+  (start-process "tag-edit-external-editor" nil (or editor tag-edit-external-editor) (or file (tag-edit-file-at-point))))
 
 (defun tag-edit-files (files &optional recursive-p)
   "Open a buffer to edit the tags of FILES. If a file is a
