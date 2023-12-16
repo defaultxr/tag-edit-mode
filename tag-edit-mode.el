@@ -46,6 +46,10 @@
 ;; ;; FIX: make a function to go to a specified tag for the file under point
 ;; Emacs has exif-field and exif-tag-alist to get EXIF tags, but it doesn't allow them to be set.
 
+;;; requirements
+
+(require 'cl-lib)
+
 ;;; customization
 
 (defgroup tag-edit nil
@@ -110,7 +114,7 @@ command."
 
 (defun tag-edit-file-at-point ()
   "Get the filename of the file under point."
-  (second (assoc "file" (tag-edit-tags-at-point))))
+  (cl-second (assoc "file" (tag-edit-tags-at-point))))
 
 (defun tag-edit-file-at-point-number ()
   "Get the index of the file under point."
@@ -131,9 +135,9 @@ buffer to its original tags.")
   "Write a tag-edit interface element to the current buffer, at point."
   (let ((intangible (cl-getf additional-properties additional-properties (gensym)))
         (props `(read-only ,(or ro-message "Cannot edit tag-edit template") ,@additional-properties)))
-    (set-text-properties start (+ start 1) (list* 'cursor-intangible intangible props))
-    (set-text-properties (+ start 1) (- end 1) (list* 'cursor-intangible intangible props))
-    (set-text-properties (- end 1) end (list* 'rear-nonsticky t props))))
+    (set-text-properties start (+ start 1) (cl-list* 'cursor-intangible intangible props))
+    (set-text-properties (+ start 1) (- end 1) (cl-list* 'cursor-intangible intangible props))
+    (set-text-properties (- end 1) end (cl-list* 'rear-nonsticky t props))))
 
 (defun tag-edit-buffer-insert-tag (name value)
   (let ((ro-msg "Cannot edit tag-edit template"))
@@ -156,10 +160,10 @@ data at INDEX in the buffer's data."
       (setq file-tags (list (list "file" file))))
     (puthash index file-tags tag-edit-files-original-tags)
     (dolist (tag tag-edit-standard-tags)
-      (tag-edit-buffer-insert-tag tag (second (assoc tag file-tags))))
+      (tag-edit-buffer-insert-tag tag (cl-second (assoc tag file-tags))))
     (dolist (tag file-tags)
-      (unless (cl-find (first tag) tag-edit-standard-tags :test #'string=)
-        (tag-edit-buffer-insert-tag (first tag) (second tag))))
+      (unless (cl-find (cl-first tag) tag-edit-standard-tags :test #'string=)
+        (tag-edit-buffer-insert-tag (cl-first tag) (cl-second tag))))
     (insert "\n")))
 
 (defun tag-edit-buffer-insert-files (files)
@@ -235,9 +239,9 @@ their values using kid3-cli."
         (cons (list "file" file)
               (if (hash-table-p frames)
                   (tag-edit--hash-table-alist frames)
-                (append (map 'vector (lambda (frame)
-                                       (list (gethash "name" frame) (gethash "value" frame)))
-                             frames)
+                (append (cl-map 'vector (lambda (frame)
+                                          (list (gethash "name" frame) (gethash "value" frame)))
+                                frames)
                         nil)))))))
 
 (defun tag-edit-write-file-tags-with-kid3-cli (file tags &optional output-file)
@@ -251,8 +255,8 @@ See also: `tag-edit-write-file-tags'"
     (copy-file file output-file))
   (call-process "kid3-cli" nil "*kid3-cli-output*" nil "-c" "select" (or output-file file)
                 (cl-loop for tag in tags
-                         unless (string= (first tag) "file")
-                         append (list "-c" (concat "set " (first tag) " '" (s-replace "'" "\\'" (second tag)) "'")))))
+                         unless (string= (cl-first tag) "file")
+                         append (list "-c" (concat "set " (cl-first tag) " '" (s-replace "'" "\\'" (cl-second tag)) "'")))))
 
 ;;; ffmpeg
 
@@ -265,10 +269,10 @@ their values using ffprobe (ffmpeg)."
     (when-let* ((data (json-parse-buffer))
                 (format (gethash "format" data))
                 (tags (gethash "tags" format)))
-      (list* (list "file" file)
-             (mapcar (lambda (tag)
-                       (list tag (gethash tag tags)))
-                     (hash-table-keys tags))))))
+      (cl-list* (list "file" file)
+                (mapcar (lambda (tag)
+                          (list tag (gethash tag tags)))
+                        (hash-table-keys tags))))))
 
 (defun tag-edit-read-file-tags-with-ffmpeg-ffmetadata (file)
   (let ((ffmetadata-file (make-temp-file "tag-edit-mode-ffmetadata-tmp-" nil ".txt"))
@@ -309,8 +313,8 @@ See also: `tag-edit-write-file-tags-with-ffmpeg-ffmetadata'"
              "-codec" "copy" ; prevent unnecessary reencoding
              ;; "-write_id3v2" "1" ; may sometimes be needed if ffmpeg can't guess the tag type
              ,@(cl-loop for tag in tags
-                        unless (string= (first tag) "file")
-                        append (list "-metadata" (concat (first tag) "=" (second tag))))
+                        unless (string= (cl-first tag) "file")
+                        append (list "-metadata" (concat (cl-first tag) "=" (cl-second tag))))
              ,(if replace-p
                   temp-file-name
                 output-file)))
@@ -323,7 +327,7 @@ See also: `tag-edit-write-file-tags-with-ffmpeg-ffmetadata'"
     (insert ";FFMETADATA1\n")
     (dolist (tag tags)
       (unless (string= "file" (car tag))
-        (insert (first tag) "=" (second tag) "\n")))
+        (insert (cl-first tag) "=" (cl-second tag) "\n")))
     (write-file filename)))
 
 (defun tag-edit-write-file-tags-with-ffmpeg-ffmetadata (file tags &optional output-file)
@@ -429,7 +433,7 @@ specified, use that backend for this invocation."
          (file (tag-edit-file-at-point)))
     (tag-edit-write-file-tags-with-ffmpeg-args file tags)
     (when tag-edit-pulse-on-save
-      (pulse-momentary-highlight-region (first region) (second region)))))
+      (pulse-momentary-highlight-region (cl-first region) (cl-second region)))))
 
 (defun tag-edit-goto-file (file)
   "Move point to FILE in the current buffer."
@@ -441,7 +445,7 @@ specified, use that backend for this invocation."
 (defun tag-edit-goto-file-number (n)
   "Move point to the Nth file in the current buffer."
   (if-let ((tags (gethash n tag-edit-files-original-tags)))
-      (tag-edit-goto-file (second (assoc "file" tags)))
+      (tag-edit-goto-file (cl-second (assoc "file" tags)))
     (user-error "No file at index %d" n)))
 
 (defun tag-edit-current-index ()
@@ -474,8 +478,8 @@ See also: `tag-edit-revert-all-file-tags'"
          (region (tag-edit-tags-at-point-region))
          (file (tag-edit-file-at-point))
          (index (tag-edit-current-index)))
-    (goto-char (first region))
-    (delete-region (first region) (+ 2 (second region)))
+    (goto-char (cl-first region))
+    (delete-region (cl-first region) (+ 2 (cl-second region)))
     (tag-edit-buffer-insert-file file index)))
 
 (defun tag-edit-revert-all-file-tags ()
@@ -583,8 +587,8 @@ the number of directory replacements done as its second."
                         (while (> found 0)
                           (setq found 0)
                           (let ((result (remap-dirs-to-contents files)))
-                            (setq found (second result)
-                                  files (first result))))
+                            (setq found (cl-second result)
+                                  files (cl-first result))))
                         files)
                     files))
            (files (if tag-edit-ignore-files-function
