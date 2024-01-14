@@ -251,32 +251,36 @@ in TAGS are changed. A tag is removed if its value in TAGS is
 empty or nil.
 
 See also: `tag-edit-write-file-tags'"
-  (when output-file
-    (copy-file file output-file))
-  (call-process "kid3-cli" nil "*kid3-cli-output*" nil "-c" "select" (or output-file file)
-                (cl-loop for tag in tags
-                         unless (string= (cl-first tag) "file")
-                         append (list "-c" (concat "set " (cl-first tag) " '" (s-replace "'" "\\'" (cl-second tag)) "'")))))
+  (let ((file (expand-file-name file))
+        (output-file (when output-file (expand-file-name output-file))))
+    (when output-file
+      (copy-file file output-file))
+    (call-process "kid3-cli" nil "*kid3-cli-output*" nil "-c" "select" (or output-file file)
+                  (cl-loop for tag in tags
+                           unless (string= (cl-first tag) "file")
+                           append (list "-c" (concat "set " (cl-first tag) " '" (s-replace "'" "\\'" (cl-second tag)) "'"))))))
 
 ;;; ffmpeg
 
 (defun tag-edit-read-file-tags-with-ffmpeg-ffprobe (file)
   "Get an alist mapping the names of all tags detected in FILE to
 their values using ffprobe (ffmpeg)."
-  (with-temp-buffer
-    (call-process "ffprobe" nil (current-buffer) nil "-v" "quiet" "-print_format" "json" "-show_format" "-show_streams" file)
-    (goto-char (point-min))
-    (when-let* ((data (json-parse-buffer))
-                (format (gethash "format" data))
-                (tags (gethash "tags" format)))
-      (cl-list* (list "file" file)
-                (mapcar (lambda (tag)
-                          (list tag (gethash tag tags)))
-                        (hash-table-keys tags))))))
+  (let ((file (expand-file-name file)))
+    (with-temp-buffer
+      (call-process "ffprobe" nil (current-buffer) nil "-v" "quiet" "-print_format" "json" "-show_format" "-show_streams" file)
+      (goto-char (point-min))
+      (when-let* ((data (json-parse-buffer))
+                  (format (gethash "format" data))
+                  (tags (gethash "tags" format)))
+        (cl-list* (list "file" file)
+                  (mapcar (lambda (tag)
+                            (list tag (gethash tag tags)))
+                          (hash-table-keys tags)))))))
 
 (defun tag-edit-read-file-tags-with-ffmpeg-ffmetadata (file)
-  (let ((ffmetadata-file (make-temp-file "tag-edit-mode-ffmetadata-tmp-" nil ".txt"))
-        result)
+  (let* ((file (expand-file-name file))
+         (ffmetadata-file (make-temp-file "tag-edit-mode-ffmetadata-tmp-" nil ".txt"))
+         result)
     (call-process "ffmpeg" nil nil nil "-y" "-i" file "-f" "ffmetadata" ffmetadata-file)
     (with-temp-buffer
       (insert-file-contents-literally ffmetadata-file)
@@ -302,7 +306,8 @@ argument. Only tags specified in TAGS are changed. A tag is
 removed if its value in TAGS is empty or nil.
 
 See also: `tag-edit-write-file-tags-with-ffmpeg-ffmetadata'"
-  (let* ((output-file (or output-file file))
+  (let* ((file (expand-file-name file))
+         (output-file (or output-file file))
          (replace-p (string= file output-file))
          (temp-file-name (concat (file-name-directory output-file) ".out-" (file-name-nondirectory output-file))))
     (apply #'call-process "ffmpeg" nil tag-edit-debug-log-path nil
