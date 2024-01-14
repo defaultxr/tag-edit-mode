@@ -14,7 +14,7 @@ An Emacs major mode to edit file tags (id3, vorbis, etc). Quickly and easily edi
 
 * Installation
 
-Ensure you have ~ffmpeg~ installed and in your ~$PATH~ so Emacs can find it, since tag-edit-mode requires it.
+Ensure you have ~kid3-cli~ or ~ffmpeg~ installed and in your ~$PATH~, since tag-edit-mode currently requires one of them in order to read and write tags.
 
 After installing tag-edit-mode by putting its directory in your ~load-path~, type ~M-: (require 'tag-edit-mode) RET~ to load it.
 
@@ -80,4 +80,4 @@ Beets' [[https://beets.readthedocs.io/en/stable/plugins/edit.html][edit plugin]]
 ** [[https://kid3.kde.org/][kid3]]
 Media tag editor from the KDE project. If you want to easily tag multiple MP3, Ogg/Vorbis, FLAC, Monkey’s Audio, MPC, MP4/AAC, MP2, Opus, Speex, TrueAudio, WavPack, WMA/WMV, WAV and AIFF files (e.g. full albums) without typing the same information again and again and have control over both ID3v1 and ID3v2 tags, then Kid3 is the program you are looking for.
 
-Kid3 even has its own command line interface, but it is not specialized for Emacs.
+Kid3 even has its own command line interface, but it is not specialized for Emacs. This command line interface is actually what tag-edit-mode uses for the kid3 backend.
