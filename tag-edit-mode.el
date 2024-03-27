@@ -232,12 +232,14 @@ data at INDEX in the buffer's data."
 their values using kid3-cli."
   (let ((file (expand-file-name file)))
     (with-temp-buffer
+      ;; FIX: check if kid3-cli exits with a non-zero status?
       (call-process "kid3-cli" nil (current-buffer) nil "-c" "select" file "-c" "{\"method\":\"get\"}")
       (goto-char (point-min))
-      (let* ((json (json-parse-buffer)) ; FIX: check if kid3-cli gave an error
-             (tagged-file (gethash "taggedFile" (gethash "result" json)))
-             (frames (gethash "frames" (or (gethash "tag2" tagged-file)
-                                           (gethash "tag1" tagged-file)))))
+      (when-let* ((json (json-parse-buffer))
+                  (tagged-file (gethash "taggedFile" (gethash "result" json)))
+                  (tag (or (gethash "tag2" tagged-file)
+                           (gethash "tag1" tagged-file)))
+                  (frames (gethash "frames" tag)))
         (cons (list "file" file)
               (if (hash-table-p frames)
                   (tag-edit--hash-table-alist frames)
