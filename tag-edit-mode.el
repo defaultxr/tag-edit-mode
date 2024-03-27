@@ -603,10 +603,10 @@ the number of directory replacements done as its second."
            (files (if tag-edit-ignore-files-function
                       (cl-remove-if tag-edit-ignore-files-function files)
                     files)))
-      (switch-to-buffer buffer)
-      (tag-edit-mode)
-      (tag-edit-buffer-insert-files files)
-      (goto-char (point-min)))))
+      (with-current-buffer buffer
+        (tag-edit-buffer-insert-files files)
+        (tag-edit-mode)
+        (goto-char (point-min))))))
 
 (defun tag-edit-file (file)
   "Open a buffer to edit the tags of FILE."
