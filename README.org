@@ -81,3 +81,13 @@ Beets' [[https://beets.readthedocs.io/en/stable/plugins/edit.html][edit plugin]]
 Media tag editor from the KDE project. If you want to easily tag multiple MP3, Ogg/Vorbis, FLAC, Monkey’s Audio, MPC, MP4/AAC, MP2, Opus, Speex, TrueAudio, WavPack, WMA/WMV, WAV and AIFF files (e.g. full albums) without typing the same information again and again and have control over both ID3v1 and ID3v2 tags, then Kid3 is the program you are looking for.
 
 Kid3 even has its own command line interface, but it is not specialized for Emacs. This command line interface is actually what tag-edit-mode uses for the kid3 backend.
+
+** [[https://www.gnu.org/software/emms/][Emms]]
+Emms is the Emacs Multimedia System. Emms displays and plays multimedia from within GNU/Emacs using a variety of external players and from different sources.
+
+Emms can run as a minimalist player and controlled with a handful of M-x Emacs commands, or a fully-fledged, interactive media browser. Emms can display album art, play streaming audio, tag music files, search for lyrics, provide MPD connectivity, control the volume, and more.
+
+As noted, Emms does have the ability to edit tags for music files, however this may be overkill if you only want to edit tags in Emacs and don't care about the other tasks.
+
+** [[https://github.com/pft/elisp-assorted/blob/master/taggit.el][taggit.el]]
+Emacs interface to the ~taggit~ command line tag editing program. Seems likely to be bit-rotted, as taggit is now known as [[https://github.com/ft/amded][amded]]. Also of note is that taggit/amded uses the taglib library, just like kid3 does.

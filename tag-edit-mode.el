@@ -35,6 +35,8 @@
 ;; FIX: allow the user to specify backend preference (kid3-cli should be preferred by default). possibly warn when falling back to a non-preferred backend?
 ;; FIX: backends should have the following information:
 ;; - supported filetypes/tags
+;; FIX: possible future backends:
+;; - Emms's metadata library(?)
 ;; FIX: flac files have their tag names in all caps; tag-edit-mode doesn't detect this.
 ;; FIX: implement imagemagick "identify -verbose image.png" to get metadata for images. exiftool might work too?
 ;; FIX: maybe test with ERT (Emacs' unit test framework)?
