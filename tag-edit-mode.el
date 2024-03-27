@@ -171,7 +171,7 @@ data at INDEX in the buffer's data."
 (defun tag-edit-buffer-insert-files (files)
   "Write the templates for FILES in the current buffer."
   (unless tag-edit-files-original-tags
-    (setq-local tag-edit-files-original-tags (make-hash-table)))
+    (setq tag-edit-files-original-tags (make-hash-table)))
   (let ((num 0))
     (dolist (file files)
       (tag-edit-buffer-insert-file file num)
