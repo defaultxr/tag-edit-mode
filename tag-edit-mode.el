@@ -622,7 +622,8 @@ the number of directory replacements done as its second."
       (with-current-buffer buffer
         (tag-edit-buffer-insert-files files)
         (tag-edit-mode)
-        (goto-char (point-min))))))
+        (goto-char (point-min)))
+      (switch-to-buffer buffer))))
 
 (defun tag-edit-file (file)
   "Open a buffer to edit the tags of FILE.
