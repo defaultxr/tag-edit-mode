@@ -130,8 +130,8 @@ buffer to its original tags.")
   (let ((file (or file (tag-edit-file-at-point-number))))
     (if (integerp file)
         (gethash file tag-edit-files-original-tags)
-      ;; FIX
-      )))
+        ;; FIX
+        )))
 
 (defun tag-edit-ui-element (start end &optional ro-message additional-properties)
   "Write a tag-edit interface element to the current buffer, at point."
@@ -243,10 +243,10 @@ their values using kid3-cli."
         (cons (list "file" file)
               (if (hash-table-p frames)
                   (tag-edit--hash-table-alist frames)
-                (append (cl-map 'vector (lambda (frame)
-                                          (list (gethash "name" frame) (gethash "value" frame)))
-                                frames)
-                        nil)))))))
+                  (append (cl-map 'vector (lambda (frame)
+                                            (list (gethash "name" frame) (gethash "value" frame)))
+                                  frames)
+                          nil)))))))
 
 (defun tag-edit-write-file-tags-with-kid3-cli (file tags &optional output-file)
   "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if
@@ -326,7 +326,7 @@ See also: `tag-edit-write-file-tags-with-ffmpeg-ffmetadata'"
                         append (list "-metadata" (concat (cl-first tag) "=" (cl-second tag))))
              ,(if replace-p
                   temp-file-name
-                output-file)))
+                  output-file)))
     (when replace-p
       (rename-file temp-file-name output-file t))))
 
@@ -413,7 +413,7 @@ provided and it is a valid backend, just return it."
   (cond (backend
          (if (member backend tag-edit-backends)
              backend
-           (error "No known backend with name %s." backend)))
+             (error "No known backend with name %s." backend)))
         (tag-edit--backend tag-edit--backend)
         (t
          (let ((backend (tag-edit-detect-backend)))
@@ -449,7 +449,7 @@ specified, use that backend for this invocation."
   (goto-char (point-min))
   (if (search-forward (concat "file: " file) nil t)
       (beginning-of-line)
-    (user-error "Could not find file %s in the current buffer." file)))
+      (user-error "Could not find file %s in the current buffer." file)))
 
 (defun tag-edit-goto-file-number (n)
   "Move point to the Nth file in the current buffer."
@@ -585,7 +585,7 @@ the number of directory replacements done as its second."
                                (progn
                                  (setq replacements (1+ replacements))
                                  (directory-files file t "^[^.]"))
-                             (list file)))
+                               (list file)))
                          files)
                  replacements))))
     (let* ((buffer (generate-new-buffer "*tag-edit*")) ; FIX: more descriptive buffer name?
@@ -599,10 +599,10 @@ the number of directory replacements done as its second."
                             (setq found (cl-second result)
                                   files (cl-first result))))
                         files)
-                    files))
+                      files))
            (files (if tag-edit-ignore-files-function
                       (cl-remove-if tag-edit-ignore-files-function files)
-                    files)))
+                      files)))
       (with-current-buffer buffer
         (tag-edit-buffer-insert-files files)
         (tag-edit-mode)
@@ -621,7 +621,7 @@ the point on the specified one."
   (let ((directory-p (file-directory-p directory-or-file)))
     (tag-edit-files (if directory-p
                         directory-or-file
-                      (file-name-directory directory-or-file)))
+                        (file-name-directory directory-or-file)))
     (unless directory-p
       (tag-edit-goto-file directory-or-file))))
 
@@ -633,9 +633,9 @@ we're not."
   (interactive)
   (if files
       (tag-edit-files files)
-    (if (eql 'dired-mode major-mode)
-        (tag-edit-dired)
-      (call-interactively 'tag-edit-files))))
+      (if (eql 'dired-mode major-mode)
+          (tag-edit-dired)
+          (call-interactively 'tag-edit-files))))
 
 ;;; dired extensions
 
@@ -666,9 +666,9 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
   (interactive)
   (if (dired-get-marked-files)
       (tag-edit-dired-marked)
-    (if (dired-file-name-at-point)
-        (tag-edit-dired-file-at-point)
-      (error "No marked files, nor any file at point."))))
+      (if (dired-file-name-at-point)
+          (tag-edit-dired-file-at-point)
+          (error "No marked files, nor any file at point."))))
 
 ;;; header
 
