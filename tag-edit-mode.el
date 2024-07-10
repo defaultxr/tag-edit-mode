@@ -574,7 +574,7 @@ See also: `tag-edit-stop-preview'"
                               (ignore process)
                               (when (string= "finished\n" event)
                                 (setf tag-edit-preview-file-process nil))))
-      (message "Previewing %s. Call `tag-edit-stop-preview' or press C-c C-t on this file again to stop." file))))
+      (message "Previewing %s. Call `tag-edit-stop-preview' or press %s on this file again to stop." file (key-description (where-is-internal 'tag-edit-preview-file tag-edit-mode-map t))))))
 
 (defun tag-edit-open-file-in-external-editor (&optional file editor)
   "Open FILE (or the file under point if not specified) in EDITOR,
