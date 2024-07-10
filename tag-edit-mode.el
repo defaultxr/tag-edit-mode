@@ -435,7 +435,10 @@ specified, use that backend for this invocation."
 ;;; main interactive commands
 
 (defun tag-edit-write-file-tags ()
-  "Write the tags for the file at point."
+  "Write the tags for the file at point.
+
+See also: `tag-edit-write-all-file-tags',
+`tag-edit-revert-file-tags'"
   (interactive)
   (let* ((region (tag-edit-tags-at-point-region))
          (tags (tag-edit-tags-at-point))
@@ -463,7 +466,10 @@ specified, use that backend for this invocation."
     (1- matches)))
 
 (defun tag-edit-write-all-file-tags () ; FIX: may have an off-by-one error here; the first file doesn't seem to get written
-  "Write the tags for all files in the current buffer."
+  "Write the tags for all files in the current buffer.
+
+See also: `tag-edit-write-file-tags',
+`tag-edit-revert-all-file-tags'"
   (interactive)
   (save-excursion
     (let* ((tag-edit-pulse-on-save nil)
@@ -481,7 +487,8 @@ specified, use that backend for this invocation."
 (defun tag-edit-revert-file-tags ()
   "Revert the tags of the file under point to the ones currently in the file.
 
-See also: `tag-edit-revert-all-file-tags'"
+See also: `tag-edit-revert-all-file-tags',
+`tag-edit-write-file-tags'"
   (interactive)
   (let* ((inhibit-read-only t)
          (region (tag-edit-tags-at-point-region))
@@ -494,7 +501,8 @@ See also: `tag-edit-revert-all-file-tags'"
 (defun tag-edit-revert-all-file-tags ()
   "Revert the tags of all files in the buffer to the ones currently in their files.
 
-See also: `tag-edit-revert-file-tags'"
+See also: `tag-edit-revert-file-tags',
+`tag-edit-write-all-file-tags'"
   (interactive)
   (goto-char (point-min))
   (while (tag-edit-next-file)
@@ -506,26 +514,30 @@ See also: `tag-edit-revert-file-tags'"
   (user-error "`tag-edit-toggle-file-visibility' is not yet implemented."))
 
 (defun tag-edit-next-field (&optional n)
-  "Go to the Nth next field in the buffer."
+  "Go to the Nth next field in the buffer.
+
+See also: `tag-edit-previous-field', `tag-edit-next-file'"
   (interactive "p")
   (search-forward-regexp tag-edit-tag-name-regexp nil t (or n 1)))
 
 (defun tag-edit-previous-field (&optional n)
-  "Go to the Nth previous field in the buffer."
+  "Go to the Nth previous field in the buffer.
+
+See also: `tag-edit-next-field', `tag-edit-previous-file'"
   (interactive "p")
   (tag-edit-next-field (- (or n 1))))
 
 (defun tag-edit-next-file (&optional n)
   "Move forward N files.
 
-See also: `tag-edit-previous-file'"
+See also: `tag-edit-previous-file', `tag-edit-next-field'"
   (interactive "p")
   (search-forward-regexp "^file: " nil nil (or n 1)))
 
 (defun tag-edit-previous-file (&optional n)
   "Move backward N files.
 
-See also: `tag-edit-next-file'"
+See also: `tag-edit-next-file', `tag-edit-previous-field'"
   (interactive "p")
   (beginning-of-line)
   (tag-edit-next-file (- (or n 1)))
@@ -542,7 +554,9 @@ See also: `tag-edit-next-file'"
 
 (defun tag-edit-preview-file (&optional file player)
   "Play the file under point in an audio player. If a preview for
-this file is already playing, stop the preview."
+this file is already playing, stop the preview.
+
+See also: `tag-edit-stop-preview'"
   (interactive)
   (let* ((file (or file (tag-edit-file-at-point)))
          (player (or player tag-edit-audio-player))
@@ -572,7 +586,9 @@ or `tag-edit-external-editor'."
   "Open a buffer to edit the tags of FILES. If a file is a
 directory, its containing files are added. If RECURSIVE-P is
 true, also add the contents of any directories found within those
-directories, and so on."
+directories, and so on.
+
+See also: `tag-edit-file', `tag-edit-directory', `tag-edit'"
   (interactive "f")
   (cl-flet ((remap-dirs-to-contents (files)
               "Replace each directory in FILES with a list of its contents, and
@@ -609,14 +625,18 @@ the number of directory replacements done as its second."
         (goto-char (point-min))))))
 
 (defun tag-edit-file (file)
-  "Open a buffer to edit the tags of FILE."
+  "Open a buffer to edit the tags of FILE.
+
+See also: `tag-edit-files', `tag-edit-directory', `tag-edit'"
   (interactive "f")
   (tag-edit-files (list file)))
 
 (defun tag-edit-directory (&optional directory-or-file)
   "Edit the tags of the files in DIRECTORY-OR-FILE. If a file is
 specified, edit the tags of all files in its directory, placing
-the point on the specified one."
+the point on the specified one.
+
+See also: `tag-edit-files', `tag-edit-file', `tag-edit'"
   (interactive "D")
   (let ((directory-p (file-directory-p directory-or-file)))
     (tag-edit-files (if directory-p
@@ -629,7 +649,9 @@ the point on the specified one."
   "Edit the tags of FILES. If no files are provided, attempt to \"do
 what you mean\"; editing either the marked files or file at point
 if we're in a dired buffer, or prompting the user for a file if
-we're not."
+we're not.
+
+See also: `tag-edit-files', `tag-edit-file', `tag-edit-directory'"
   (interactive)
   (if files
       (tag-edit-files files)
