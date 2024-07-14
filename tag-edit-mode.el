@@ -466,6 +466,11 @@ See also: `tag-edit-write-all-file-tags',
   (when-let ((matches (count-matches "^file: " (point-min) (point))))
     (1- matches)))
 
+(defun tag-edit-tags-equivalent (tags-1 tags-2)
+  "True if TAGS-1 and TAGS-2 are equivalent."
+  nil ; FIX
+  )
+
 (defun tag-edit-write-all-file-tags () ; FIX: may have an off-by-one error here; the first file doesn't seem to get written
   "Write the tags for all files in the current buffer.
 
@@ -479,7 +484,7 @@ See also: `tag-edit-write-file-tags',
       (dolist (index keys)
         (message "Writing tag for file %d of %d" index num-keys)
         (tag-edit-goto-file-number index)
-        (unless (tag-edit-tags-equivalent (tag-edit-tags-at-point) ; FIX: define tag-edit-tags-equivalent
+        (unless (tag-edit-tags-equivalent (tag-edit-tags-at-point)
                                           (gethash (tag-edit-file-at-point-number) tag-edit-files-original-tags))
           (tag-edit-write-file-tags)))))
   (set-buffer-modified-p nil)
