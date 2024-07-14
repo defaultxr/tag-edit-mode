@@ -701,12 +701,12 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
 
 ;;; header
 
-(defun tag-edit-update-header () ; FIX: show number of files with unsaved tags?
+(defun tag-edit-update-header () ; FIX: show number of files with unsaved tags
   "Update the header line of the tag-edit buffer."
   (save-excursion
     (goto-char (point-min))
-    (let ((count (count-matches "^file: ")))
-      (setf header-line-format (concat "Editing tags of " (number-to-string count) " file" (when (/= count 1) "s")))))
+    (let ((count (length (hash-table-keys tag-edit-files-original-tags))))
+      (setq header-line-format (concat "tag-edit-mode: Editing " (number-to-string count) " file" (when (/= count 1) "s")))))
   (force-mode-line-update))
 
 ;;; font-lock
