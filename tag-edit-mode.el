@@ -488,7 +488,7 @@ See also: `tag-edit-write-file-tags',
                                           (gethash (tag-edit-file-at-point-number) tag-edit-files-original-tags))
           (tag-edit-write-file-tags)))))
   (set-buffer-modified-p nil)
-  (setf tag-edit-unsaved-files nil))
+  (setq tag-edit-unsaved-files nil))
 
 (defun tag-edit-revert-file-tags ()
   "Revert the tags of the file under point to the ones currently in the file.
@@ -556,7 +556,7 @@ See also: `tag-edit-next-file', `tag-edit-previous-field'"
   "Stop the audio preview started by `tag-edit-preview-file'."
   (interactive)
   (kill-process tag-edit-preview-file-process)
-  (setf tag-edit-preview-file-process nil))
+  (setq tag-edit-preview-file-process nil))
 
 (defun tag-edit-preview-file (&optional file player)
   "Play the file under point in an audio player. If a preview for
@@ -573,13 +573,13 @@ See also: `tag-edit-stop-preview'"
                (process-live-p tag-edit-preview-file-process))
       (tag-edit-stop-preview))
     (when should-play
-      (setf tag-edit-preview-file-process (start-process "tag-edit-file-preview" nil player file))
+      (setq tag-edit-preview-file-process (start-process "tag-edit-file-preview" nil player file))
       (process-put tag-edit-preview-file-process 'filename file)
       (set-process-sentinel tag-edit-preview-file-process
                             (lambda (process event)
                               (ignore process)
                               (when (string= "finished\n" event)
-                                (setf tag-edit-preview-file-process nil))))
+                                (setq tag-edit-preview-file-process nil))))
       (message "Previewing %s. Call `tag-edit-stop-preview' or press %s on this file again to stop." file (key-description (where-is-internal 'tag-edit-preview-file tag-edit-mode-map t))))))
 
 (defun tag-edit-open-file-in-external-editor (&optional file editor)
