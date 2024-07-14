@@ -131,7 +131,7 @@ buffer to its original tags.")
   (let ((file (or file (tag-edit-file-at-point-number))))
     (if (integerp file)
         (gethash file tag-edit-files-original-tags)
-        ;; FIX
+        (user-error "tag-edit-file-original-tags does not yet support %s as the FILE argument" file) ; FIX
         )))
 
 (defun tag-edit-ui-element (start end &optional ro-message additional-properties)
