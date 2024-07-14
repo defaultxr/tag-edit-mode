@@ -125,6 +125,7 @@ command."
 (defvar-local tag-edit-files-original-tags nil
   "The hash table mapping the index of the file in the current
 buffer to its original tags.")
+(put 'tag-edit-files-original-tags 'permanent-local t)
 
 (defun tag-edit-file-original-tags (&optional file)
   (let ((file (or file (tag-edit-file-at-point-number))))
