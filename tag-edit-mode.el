@@ -750,7 +750,7 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
 (define-derived-mode tag-edit-mode fundamental-mode "Tag-Edit"
   "Major mode for editing file tags."
   (use-local-map tag-edit-mode-map)
-  ;; (add-to-list 'after-change-functions 'tag-edit-after-change-function) ; FIX: update header and set-buffer-modified-p
+  (add-hook 'after-change-functions 'tag-edit-after-change 90 t)
   (run-hooks 'tag-edit-mode-hook)
   (cursor-intangible-mode 1)
   (setq font-lock-defaults '(tag-edit-mode-font-lock))
