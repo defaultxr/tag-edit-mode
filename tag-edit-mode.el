@@ -457,7 +457,7 @@ See also: `tag-edit-write-all-file-tags',
       (beginning-of-line)
       (user-error "Could not find file %s in the current buffer." file)))
 
-(defun tag-edit-goto-file-number (n)
+(defun tag-edit-goto-file-index (n)
   "Move point to the Nth file in the current buffer."
   (if-let ((tags (gethash n tag-edit-files-original-tags)))
       (tag-edit-goto-file (cl-second (assoc "file" tags)))
@@ -480,7 +480,7 @@ See also: `tag-edit-write-file-tags',
            (num-keys (length keys)))
       (dolist (index keys)
         (message "Writing tag for file %d of %d" index num-keys)
-        (tag-edit-goto-file-number index)
+        (tag-edit-goto-file-index index)
         (unless (tag-edit-tags-equivalent (tag-edit-tags-at-point)
                                           (gethash (tag-edit-file-at-point-index) tag-edit-files-original-tags))
           (tag-edit-write-file-tags)))))
