@@ -101,7 +101,8 @@ command."
   :group 'tag-edit)
 
 (defcustom tag-edit-pulse-on-save t
-  "Whether to pulse the file after saving its tags."
+  "Whether to pulse the file after saving its tags. Note that this
+does not apply when saving tags for the entire buffer."
   :type 'boolean
   :group 'tag-edit)
 
