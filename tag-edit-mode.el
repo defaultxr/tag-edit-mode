@@ -211,14 +211,19 @@ data at INDEX in the buffer's data."
 
 (defun tag-edit-after-change (beginning end length)
   "Function called after a change is made to a tag-edit-mode buffer."
-  (ignore beginning end length)
-  ;; FIX:
-  ;; - compare text of tags in buffer to the original tags. if they aren't the same, add the filename to tag-edit-unsaved-files. if they are the same, ensure it is not in tag-edit-unsaved-files.
+  (ignore end length)
   (when (eql major-mode 'tag-edit-mode)
-    (gethash (tag-edit-file-at-point-index) tag-edit-files-original-tags))
-  ;; - update header (?)
-  ;; (set-buffer-modified-p (> (length tag-edit-unsaved-files) 0))
-  )
+    (save-excursion
+      (goto-char beginning)
+      (let ((file (tag-edit-file-at-point))
+            (current-tags (tag-edit-tags-at-point))
+            (original-tags (gethash (tag-edit-file-at-point-index) tag-edit-files-original-tags)))
+        (if (tag-edit-tags-equivalent current-tags original-tags)
+            (setq tag-edit-unsaved-files (cl-remove file tag-edit-unsaved-files :test #'string=))
+            (progn
+              (cl-pushnew file tag-edit-unsaved-files :test #'string=)
+              (tag-edit-update-header))))))
+  (set-buffer-modified-p (> (length tag-edit-unsaved-files) 0)))
 
 ;;; kid3-cli
 
