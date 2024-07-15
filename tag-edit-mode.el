@@ -484,7 +484,7 @@ See also: `tag-edit-write-file-tags',
            (keys (sort (hash-table-keys tag-edit-files-original-tags) #'<))
            (num-keys (length keys)))
       (dolist (index keys)
-        (message "Writing tag for file %d of %d" index num-keys)
+        (message "Writing tag for file %d of %d" (1+ index) num-keys)
         (tag-edit-goto-file-index index)
         (unless (tag-edit-tags-equivalent (tag-edit-tags-at-point)
                                           (gethash (tag-edit-file-at-point-index) tag-edit-files-original-tags))
