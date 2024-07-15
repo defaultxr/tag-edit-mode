@@ -463,9 +463,11 @@ See also: `tag-edit-write-all-file-tags',
       (user-error "Could not find file %s in the current buffer." file)))
 
 (defun tag-edit-goto-file-index (n)
-  "Move point to the Nth file in the current buffer."
+  "Move point to the Nth file in the current buffer, counting from
+0."
   (if-let ((tags (gethash n tag-edit-files-original-tags)))
-      (tag-edit-goto-file (cl-second (assoc "file" tags)))
+      (progn (goto-char (point-min))
+             (search-forward-regexp "^file: " nil t (1+ n)))
     (user-error "No file at index %d" n)))
 
 (defun tag-edit-tags-equivalent (tags-1 tags-2)
