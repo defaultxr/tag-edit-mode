@@ -116,8 +116,8 @@ does not apply when saving tags for the entire buffer."
   (funcall (tag-edit-backend-read-function) file))
 
 (defun tag-edit-file-at-point ()
-  "Get the filename of the file under point."
-  (cl-second (assoc "file" (tag-edit-tags-at-point))))
+  "Get the original filename of the file under point."
+  (cl-second (assoc "file" (tag-edit-original-tags-at-point))))
 
 (defun tag-edit-file-at-point-index ()
   "Get the index of the file under point."
@@ -206,6 +206,10 @@ data at INDEX in the buffer's data."
                 result))
         result))))
 
+(defun tag-edit-original-tags-at-point ()
+  "Get the alist of the original tags for the file at point."
+  (gethash (tag-edit-file-at-point-index) tag-edit-files-original-tags))
+
 (defvar-local tag-edit-unsaved-files nil
   "List of files in the tag-edit-mode buffer with unsaved changes.")
 
@@ -217,7 +221,7 @@ data at INDEX in the buffer's data."
       (goto-char beginning)
       (let ((file (tag-edit-file-at-point))
             (current-tags (tag-edit-tags-at-point))
-            (original-tags (gethash (tag-edit-file-at-point-index) tag-edit-files-original-tags)))
+            (original-tags (tag-edit-original-tags-at-point)))
         (if (tag-edit-tags-equivalent current-tags original-tags)
             (setq tag-edit-unsaved-files (cl-remove file tag-edit-unsaved-files :test #'string=))
             (progn
@@ -488,8 +492,7 @@ See also: `tag-edit-write-file-tags',
       (dolist (index keys)
         (message "Writing tag for file %d of %d" (1+ index) num-keys)
         (tag-edit-goto-file-index index)
-        (unless (tag-edit-tags-equivalent (tag-edit-tags-at-point)
-                                          (gethash (tag-edit-file-at-point-index) tag-edit-files-original-tags))
+        (unless (tag-edit-tags-equivalent (tag-edit-tags-at-point) (tag-edit-original-tags-at-point))
           (tag-edit-write-file-tags)))))
   (set-buffer-modified-p nil)
   (setq tag-edit-unsaved-files nil))
