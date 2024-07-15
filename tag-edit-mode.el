@@ -118,9 +118,10 @@ command."
   "Get the filename of the file under point."
   (cl-second (assoc "file" (tag-edit-tags-at-point))))
 
-(defun tag-edit-file-at-point-number ()
+(defun tag-edit-file-at-point-index ()
   "Get the index of the file under point."
-  (1- (count-matches "^file: " (point-min) (point))))
+  (when-let ((matches (count-matches "^file: " (point-min) (point))))
+    (1- matches)))
 
 (defvar-local tag-edit-files-original-tags nil
   "The hash table mapping the index of the file in the current
@@ -128,7 +129,7 @@ buffer to its original tags.")
 (put 'tag-edit-files-original-tags 'permanent-local t)
 
 (defun tag-edit-file-original-tags (&optional file)
-  (let ((file (or file (tag-edit-file-at-point-number))))
+  (let ((file (or file (tag-edit-file-at-point-index))))
     (if (integerp file)
         (gethash file tag-edit-files-original-tags)
         (user-error "tag-edit-file-original-tags does not yet support %s as the FILE argument" file) ; FIX
@@ -213,7 +214,7 @@ data at INDEX in the buffer's data."
   ;; FIX:
   ;; - compare text of tags in buffer to the original tags. if they aren't the same, add the filename to tag-edit-unsaved-files. if they are the same, ensure it is not in tag-edit-unsaved-files.
   (when (eql major-mode 'tag-edit-mode)
-    (gethash (tag-edit-file-at-point-number) tag-edit-files-original-tags))
+    (gethash (tag-edit-file-at-point-index) tag-edit-files-original-tags))
   ;; - update header (?)
   ;; (set-buffer-modified-p (> (length tag-edit-unsaved-files) 0))
   )
@@ -461,11 +462,6 @@ See also: `tag-edit-write-all-file-tags',
       (tag-edit-goto-file (cl-second (assoc "file" tags)))
     (user-error "No file at index %d" n)))
 
-(defun tag-edit-current-index ()
-  "Get the index of the file under point."
-  (when-let ((matches (count-matches "^file: " (point-min) (point))))
-    (1- matches)))
-
 (defun tag-edit-tags-equivalent (tags-1 tags-2)
   "True if TAGS-1 and TAGS-2 are equivalent."
   nil ; FIX
@@ -485,7 +481,7 @@ See also: `tag-edit-write-file-tags',
         (message "Writing tag for file %d of %d" index num-keys)
         (tag-edit-goto-file-number index)
         (unless (tag-edit-tags-equivalent (tag-edit-tags-at-point)
-                                          (gethash (tag-edit-file-at-point-number) tag-edit-files-original-tags))
+                                          (gethash (tag-edit-file-at-point-index) tag-edit-files-original-tags))
           (tag-edit-write-file-tags)))))
   (set-buffer-modified-p nil)
   (setq tag-edit-unsaved-files nil))
@@ -499,7 +495,7 @@ See also: `tag-edit-revert-all-file-tags',
   (let* ((inhibit-read-only t)
          (region (tag-edit-tags-at-point-region))
          (file (tag-edit-file-at-point))
-         (index (tag-edit-current-index)))
+         (index (tag-edit-file-at-point-index)))
     (goto-char (cl-first region))
     (delete-region (cl-first region) (+ 2 (cl-second region)))
     (tag-edit-buffer-insert-file file index)))
