@@ -6,7 +6,7 @@
 ;; Homepage: https://github.com/defaultxr/tag-edit-mode
 ;; Keywords: files, multimedia, tools
 ;; Version: 0.5
-;; Package-Requires: ((emacs "24.4"))
+;; Package-Requires: ((emacs "24.4") cl-lib)
 
 ;; This file is not part of GNU Emacs.
 
