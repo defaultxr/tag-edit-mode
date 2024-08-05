@@ -117,7 +117,7 @@ does not apply when saving tags for the entire buffer."
 
 (defun tag-edit-file-at-point ()
   "Get the original filename of the file under point."
-  (cl-second (assoc "file" (tag-edit-original-tags-at-point))))
+  (cadr (assoc "file" (tag-edit-original-tags-at-point))))
 
 (defun tag-edit-file-at-point-index ()
   "Get the index of the file under point."
@@ -165,10 +165,10 @@ data at INDEX in the buffer's data."
       (setq file-tags (list (list "file" file))))
     (puthash index file-tags tag-edit-files-original-tags)
     (dolist (tag tag-edit-standard-tags)
-      (tag-edit-buffer-insert-tag tag (cl-second (assoc tag file-tags))))
+      (tag-edit-buffer-insert-tag tag (cadr (assoc tag file-tags))))
     (dolist (tag file-tags)
-      (unless (cl-find (cl-first tag) tag-edit-standard-tags :test #'string=)
-        (tag-edit-buffer-insert-tag (cl-first tag) (cl-second tag))))
+      (unless (cl-find (car tag) tag-edit-standard-tags :test #'string=)
+        (tag-edit-buffer-insert-tag (car tag) (cadr tag))))
     (insert "\n")))
 
 (defun tag-edit-buffer-insert-files (files)
@@ -273,8 +273,8 @@ See also: `tag-edit-write-file-tags'"
       (copy-file file output-file))
     (call-process "kid3-cli" nil "*kid3-cli-output*" nil "-c" "select" (or output-file file)
                   (cl-loop for tag in tags
-                           unless (string= (cl-first tag) "file")
-                           append (list "-c" (concat "set " (cl-first tag) " '" (s-replace "'" "\\'" (cl-second tag)) "'"))))))
+                           unless (string= (car tag) "file")
+                           append (list "-c" (concat "set " (car tag) " '" (s-replace "'" "\\'" (cadr tag)) "'"))))))
 
 ;;; ffmpeg
 
@@ -334,8 +334,8 @@ See also: `tag-edit-write-file-tags-with-ffmpeg-ffmetadata'"
              "-codec" "copy" ; prevent unnecessary reencoding
              ;; "-write_id3v2" "1" ; may sometimes be needed if ffmpeg can't guess the tag type
              ,@(cl-loop for tag in tags
-                        unless (string= (cl-first tag) "file")
-                        append (list "-metadata" (concat (cl-first tag) "=" (cl-second tag))))
+                        unless (string= (car tag) "file")
+                        append (list "-metadata" (concat (car tag) "=" (cadr tag))))
              ,(if replace-p
                   temp-file-name
                   output-file)))
@@ -348,7 +348,7 @@ See also: `tag-edit-write-file-tags-with-ffmpeg-ffmetadata'"
     (insert ";FFMETADATA1\n")
     (dolist (tag tags)
       (unless (string= "file" (car tag))
-        (insert (cl-first tag) "=" (cl-second tag) "\n")))
+        (insert (car tag) "=" (cadr tag) "\n")))
     (write-file filename)))
 
 (defun tag-edit-write-file-tags-with-ffmpeg-ffmetadata (file tags &optional output-file)
@@ -457,7 +457,7 @@ See also: `tag-edit-write-all-file-tags',
          (file (tag-edit-file-at-point)))
     (tag-edit-write-file-tags-with-ffmpeg-args file tags)
     (when tag-edit-pulse-on-save
-      (pulse-momentary-highlight-region (cl-first region) (cl-second region)))))
+      (pulse-momentary-highlight-region (car region) (cadr region)))))
 
 (defun tag-edit-goto-file (file)
   "Move point to FILE in the current buffer."
@@ -507,8 +507,8 @@ See also: `tag-edit-revert-all-file-tags',
          (region (tag-edit-tags-at-point-region))
          (file (tag-edit-file-at-point))
          (index (tag-edit-file-at-point-index)))
-    (goto-char (cl-first region))
-    (delete-region (cl-first region) (+ 2 (cl-second region)))
+    (goto-char (car region))
+    (delete-region (car region) (+ 2 (cadr region)))
     (tag-edit-buffer-insert-file file index)))
 
 (defun tag-edit-revert-all-file-tags ()
@@ -625,8 +625,8 @@ the number of directory replacements done as its second."
                         (while (> found 0)
                           (setq found 0)
                           (let ((result (remap-dirs-to-contents files)))
-                            (setq found (cl-second result)
-                                  files (cl-first result))))
+                            (setq found (cadr result)
+                                  files (car result))))
                         files)
                       files))
            (files (if tag-edit-ignore-files-function
