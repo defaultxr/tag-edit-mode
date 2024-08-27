@@ -276,14 +276,20 @@ in TAGS are changed. A tag is removed if its value in TAGS is
 empty or nil.
 
 See also: `tag-edit-write-file-tags'"
-  (let ((file (expand-file-name file))
-        (output-file (when output-file (expand-file-name output-file))))
+  (let* ((file (expand-file-name file))
+         (output-file (when output-file (expand-file-name output-file)))
+         (write-file (or output-file file))
+         (original-tags (tag-edit-file-original-tags file))
+         (kid3-cli-args (list* "-c" "select" write-file
+                               (cl-loop for tag in tags
+                                        unless (string= (car tag) "file")
+                                        append (list "-c" (concat "set " (car tag)
+                                                                  " '" (s-replace "'" "\\'" (cadr tag)) "'"))))))
     (when output-file
       (copy-file file output-file))
-    (call-process "kid3-cli" nil "*kid3-cli-output*" nil "-c" "select" (or output-file file)
-                  (cl-loop for tag in tags
-                           unless (string= (car tag) "file")
-                           append (list "-c" (concat "set " (car tag) " '" (s-replace "'" "\\'" (cadr tag)) "'"))))))
+    (lwarn 'tag-edit :debug "Writing %s tag with kid3-cli; args: %s" write-file (prin1-to-string kid3-cli-args))
+    (apply #'call-process "kid3-cli" nil "*kid3-cli-output*" nil kid3-cli-args)
+    (unless (string= output-file (cadr (assoc "file" original-tags))))))
 
 ;;; ffmpeg
 
