@@ -470,7 +470,7 @@ See also: `tag-edit-write-all-file-tags',
   (let* ((region (tag-edit-tags-at-point-region))
          (tags (tag-edit-tags-at-point))
          (file (tag-edit-file-at-point)))
-    (tag-edit-write-file-tags-with-ffmpeg-args file tags)
+    (funcall (tag-edit-backend-write-function) file tags)
     (when tag-edit-pulse-on-save
       (pulse-momentary-highlight-region (car region) (cadr region)))))
 
