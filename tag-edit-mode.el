@@ -130,11 +130,20 @@ buffer to its original tags.")
 (put 'tag-edit-files-original-tags 'permanent-local t)
 
 (defun tag-edit-file-original-tags (&optional file)
-  (let ((file (or file (tag-edit-file-at-point-index))))
-    (if (integerp file)
-        (gethash file tag-edit-files-original-tags)
-        (user-error "tag-edit-file-original-tags does not yet support %s as the FILE argument" file) ; FIX
-        )))
+  "Get the original tags for the file at INDEX in the current buffer.
+
+See also: `tag-edit-index-original-tags'"
+  (let ((file (or file (tag-edit-file-at-point))))
+    (cl-loop for value being the hash-values of tag-edit-files-original-tags
+             if (string= file (cadr (assoc "file" value)))
+             return value)))
+
+(defun tag-edit-index-original-tags (&optional index)
+  "Get the original tags for the file at INDEX in the current buffer.
+
+See also: `tag-edit-file-original-tags'"
+  (let ((index (or index (tag-edit-file-at-point-index))))
+    (gethash file tag-edit-files-original-tags)))
 
 (defun tag-edit-ui-element (start end &optional ro-message additional-properties)
   "Write a tag-edit interface element to the current buffer, at point."
