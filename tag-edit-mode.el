@@ -82,6 +82,14 @@ will be preserved if the file's tags are written."
   :type '(or null function)
   :group 'tag-edit)
 
+(defcustom tag-edit-backup-directory "./tag-edit-backup-%Y-%m-%d-%H-%M-%S/"
+  "If nil, don't backup. If non-nil, backup each file in this
+directory before writing its tags. The string represents a
+directory relative to the directory of the file being saved, and
+can include `format-time-string' format codes."
+  :type '(or null string)
+  :group 'tag-edit)
+
 (defcustom tag-edit-debug-log-path nil
   "Where debug logs from external programs (such as ffmpeg) should
 be written, or nil to avoid writing logs."
@@ -461,6 +469,19 @@ specified, use that backend for this invocation."
 
 ;;; main interactive commands
 
+(defvar tag-edit--current-backup-directory nil
+  "The backup directory to use for the current tag-edit write.")
+
+(defun tag-edit--backup-directory (file)
+  "Get the backup directory to backup FILE to based on
+`tag-edit-backup-directory'. If FILE is a directory, generate the
+backup directory relative to that directory."
+  (or tag-edit--current-backup-directory
+      (when tag-edit-backup-directory
+        (format-time-string (expand-file-name tag-edit-backup-directory (if (file-directory-p file)
+                                                                            file
+                                                                            (file-name-directory file)))))))
+
 (defun tag-edit-write-file-tags ()
   "Write the tags for the file at point.
 
@@ -470,6 +491,10 @@ See also: `tag-edit-write-all-file-tags',
   (let* ((region (tag-edit-tags-at-point-region))
          (tags (tag-edit-tags-at-point))
          (file (tag-edit-file-at-point)))
+    (when-let ((backup-dir (tag-edit--backup-directory file)))
+      (message "Backing up %s to %s..." file backup-dir)
+      (make-directory backup-dir t)
+      (copy-file file (concat backup-dir (file-name-nondirectory file))))
     (funcall (tag-edit-backend-write-function) file tags)
     (when tag-edit-pulse-on-save
       (pulse-momentary-highlight-region (car region) (cadr region)))))
