@@ -122,7 +122,7 @@ does not apply when saving tags for the entire buffer."
 (defun tag-edit-file-at-point-index ()
   "Get the index of the file under point."
   (when-let ((matches (count-matches "^file: " (point-min) (point))))
-    (1- matches)))
+    (max 0 (1- matches))))
 
 (defvar-local tag-edit-files-original-tags nil
   "The hash table mapping the index of the file in the current
@@ -479,7 +479,7 @@ See also: `tag-edit-write-all-file-tags',
   nil ; FIX
   )
 
-(defun tag-edit-write-all-file-tags () ; FIX: may have an off-by-one error here; the first file doesn't seem to get written
+(defun tag-edit-write-all-file-tags ()
   "Write the tags for all files in the current buffer.
 
 See also: `tag-edit-write-file-tags',
