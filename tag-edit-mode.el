@@ -491,8 +491,15 @@ See also: `tag-edit-write-all-file-tags',
 
 (defun tag-edit-tags-equivalent (tags-1 tags-2)
   "True if TAGS-1 and TAGS-2 are equivalent."
-  nil ; FIX
-  )
+  (let ((keys-1 (mapcar #'car tags-1))
+        (keys-2 (mapcar #'car tags-2)))
+    (and (not (cl-set-exclusive-or keys-1 keys-2 :test #'string=))
+         (cl-block tag-compare
+           (dolist (key keys-1 t)
+             (unless (string= (cadr (assoc key tags-1))
+                              (cadr (assoc key tags-2)))
+               (message "Key %s differs: tag-1: %s; tag-2: %s" key (cadr (assoc key tags-1)) (cadr (assoc key tags-2)))
+               (cl-return-from tag-compare nil)))))))
 
 (defun tag-edit-write-all-file-tags ()
   "Write the tags for all files in the current buffer.
