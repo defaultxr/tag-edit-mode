@@ -804,23 +804,22 @@ See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
 
 ;;; keymap
 
-(defvar tag-edit-mode-map
-  (let ((map (make-sparse-keymap "Tag-Edit-Mode")))
-    (define-key map (kbd "C-c C-c") 'tag-edit-write-file-tags)
-    (define-key map (kbd "C-x C-s") 'tag-edit-write-all-file-tags)
-    (define-key map (kbd "C-c C-k") 'tag-edit-revert-file-tags)
-    (define-key map (kbd "C-c C-M-k") 'tag-edit-revert-file-tags)
+(defvar-keymap tag-edit-mode-map
+  :name "Tag-Edit-Mode"
+  :doc "Keymap for `tag-edit-mode'."
+  "C-c C-c" 'tag-edit-write-file-tags
+  "C-x C-s" 'tag-edit-write-all-file-tags
+  "C-c C-k" 'tag-edit-revert-file-tags
+  "C-c C-M-k" 'tag-edit-revert-file-tags
 
-    (define-key map (kbd "TAB") 'tag-edit-toggle-file-visibility)
-    (define-key map (kbd "M-n") 'tag-edit-next-field)
-    (define-key map (kbd "M-p") 'tag-edit-previous-field)
-    (define-key map (kbd "C-c C-n") 'tag-edit-next-file)
-    (define-key map (kbd "C-c C-p") 'tag-edit-previous-file)
+  "TAB" 'tag-edit-toggle-file-visibility
+  "M-n" 'tag-edit-next-field
+  "M-p" 'tag-edit-previous-field
+  "C-c C-n" 'tag-edit-next-file
+  "C-c C-p" 'tag-edit-previous-file
 
-    (define-key map (kbd "C-c C-t") 'tag-edit-preview-file)
-    (define-key map (kbd "C-c C-o") 'tag-edit-open-file-in-external-editor)
-    map)
-  "Keymap for `tag-edit-mode'.")
+  "C-c C-t" 'tag-edit-preview-file ; t for "trigger playback"
+  "C-c C-o" 'tag-edit-open-file-in-external-editor)
 
 ;;; define the mode
 
