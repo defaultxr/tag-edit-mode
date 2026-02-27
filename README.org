@@ -1,4 +1,6 @@
 #+TITLE: tag-edit-mode
+#+DATE: <2022-12-09 Fri 17:51>
+#+DESCRIPTION: An Emacs major mode to edit file tags (id3, vorbis, etc).
 
 An Emacs major mode to edit file tags (id3, vorbis, etc). Quickly and easily edit tags with the power of Emacs!
 

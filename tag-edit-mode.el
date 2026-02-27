@@ -40,13 +40,25 @@
 ;; FIX: flac files have their tag names in all caps; tag-edit-mode doesn't detect this.
 ;; FIX: implement imagemagick "identify -verbose image.png" to get metadata for images. exiftool might work too?
 ;; FIX: maybe test with ERT (Emacs' unit test framework)?
-;; FIX: mark when a tag has unwritten changes
+;; FIX: mark when a tag has unwritten changes - perhaps using the same technique as diff-hl
 ;; FIX: also mark when a file has unwritten changes
 ;; FIX: support viewing/setting images to tags
 ;; FIX: better support for files with more than one "tag set"; i.e. support reading and writing both id3v1 and id3v2.
 ;; FIX: also allow the user to specify behavior when writing files with more than one tag set. options should be: write only id3v2 and remove id3v1, write both id3v2 and v1, and ignore id3v1. possibly others?
-;; ;; FIX: make a function to go to a specified tag for the file under point
+;; FIX: make a function to go to a specified tag for the file under point
 ;; Emacs has exif-field and exif-tag-alist to get EXIF tags, but it doesn't allow them to be set.
+;; FIX: tag-edit-mode doesn't seem to handle it properly when a tag value contains newlines (for example, the Comment field or the like)
+;; FIX: use Emacs 30's new "track-changes" library:
+;; This library is a layer of abstraction above 'before-change-functions'
+;; and 'after-change-functions' which provides a superset of
+;; the functionality of 'after-change-functions':
+;; - It provides the actual previous text rather than only its length.
+;; - It takes care of accumulating and bundling changes until a time when
+;;   its client finds it convenient to react to them.
+;; - It detects most cases where some changes were not properly
+;;   reported (calls to 'before/after-change-functions' that are
+;;   incorrectly paired, missing, etc...) and reports them adequately.
+;; FIX: command to remove a file from the tag-edit buffer. i.e. if it attempts to read tags from a file you don't want to edit, you can remove the file from the buffer. doing this will NOT delete the file. maybe it could be bound to C-c <backspace> and C-c <delete> by default.
 
 ;;; requirements
 
@@ -83,10 +95,9 @@ will be preserved if the file's tags are written."
   :group 'tag-edit)
 
 (defcustom tag-edit-backup-directory "./tag-edit-backup-%Y-%m-%d-%H-%M-%S/"
-  "If nil, don't backup. If non-nil, backup each file in this
-directory before writing its tags. The string represents a
-directory relative to the directory of the file being saved, and
-can include `format-time-string' format codes."
+  "If non-nil, backup each file in this directory before writing its tags.
+The string represents a directory relative to the directory of the file
+being saved, and can include `format-time-string' format codes."
   :type '(or null string)
   :group 'tag-edit)
 
@@ -138,7 +149,8 @@ buffer to its original tags.")
 (put 'tag-edit-files-original-tags 'permanent-local t)
 
 (defun tag-edit-file-original-tags (&optional file)
-  "Get the original tags for the file at INDEX in the current buffer.
+  "Get the original tags for FILE in the current buffer. FILE defaults to
+the file under point.
 
 See also: `tag-edit-index-original-tags'"
   (let ((file (or file (tag-edit-file-at-point))))
@@ -241,15 +253,14 @@ data at INDEX in the buffer's data."
             (original-tags (tag-edit-original-tags-at-point)))
         (if (tag-edit-tags-equivalent current-tags original-tags)
             (setq tag-edit-unsaved-files (cl-remove file tag-edit-unsaved-files :test #'string=))
-            (progn
-              (cl-pushnew file tag-edit-unsaved-files :test #'string=)
-              (tag-edit-update-header))))))
+          (cl-pushnew file tag-edit-unsaved-files :test #'string=)
+          (tag-edit-update-header)))))
   (set-buffer-modified-p (> (length tag-edit-unsaved-files) 0)))
 
 ;;; kid3-cli
 
 (defun tag-edit--hash-table-alist (hash-table)
-  "Convert a hash table to an alist."
+  "Convert HASH-TABLE to an alist."
   (let (result)
     (maphash (lambda (key value)
                (push (list key value) result))
@@ -272,10 +283,10 @@ their values using kid3-cli."
         (cons (list "file" file)
               (if (hash-table-p frames)
                   (tag-edit--hash-table-alist frames)
-                  (append (cl-map 'vector (lambda (frame)
-                                            (list (gethash "name" frame) (gethash "value" frame)))
-                                  frames)
-                          nil)))))))
+                (cl-coerce (cl-map 'vector (lambda (frame)
+                                             (list (gethash "name" frame) (gethash "value" frame)))
+                                   frames)
+                           'list)))))))
 
 (defun tag-edit-write-file-tags-with-kid3-cli (file tags &optional output-file)
   "Write TAGS of FILE to OUTPUT-FILE (or just update FILE if
@@ -295,7 +306,7 @@ See also: `tag-edit-write-file-tags'"
                                                                   " '" (s-replace "'" "\\'" (cadr tag)) "'"))))))
     (when output-file
       (copy-file file output-file))
-    (lwarn 'tag-edit :debug "Writing %s tag with kid3-cli; args: %s" write-file (prin1-to-string kid3-cli-args))
+    (lwarn 'tag-edit :debug "Writing %S tag with kid3-cli; args: %S" write-file kid3-cli-args)
     (apply #'call-process "kid3-cli" nil "*kid3-cli-output*" nil kid3-cli-args)
     (unless (string= output-file (cadr (assoc "file" original-tags))))))
 
@@ -317,6 +328,8 @@ their values using ffprobe (ffmpeg)."
                           (hash-table-keys tags)))))))
 
 (defun tag-edit-read-file-tags-with-ffmpeg-ffmetadata (file)
+  "Get an alist mapping tag names to their values in FILE using ffmpeg -f
+ffmetadata."
   (let* ((file (expand-file-name file))
          (ffmetadata-file (make-temp-file "tag-edit-mode-ffmetadata-tmp-" nil ".txt"))
          result)
@@ -361,7 +374,7 @@ See also: `tag-edit-write-file-tags-with-ffmpeg-ffmetadata'"
                         append (list "-metadata" (concat (car tag) "=" (cadr tag))))
              ,(if replace-p
                   temp-file-name
-                  output-file)))
+                output-file)))
     (when replace-p
       (rename-file temp-file-name output-file t))))
 
@@ -448,12 +461,12 @@ provided and it is a valid backend, just return it."
   (cond (backend
          (if (member backend tag-edit-backends)
              backend
-             (error "No known backend with name %s." backend)))
+           (error "No known backend with name %S. Available backends are: %S" backend tag-edit-backends)))
         (tag-edit--backend tag-edit--backend)
         (t
          (let ((backend (tag-edit-detect-backend)))
            (or backend
-               (error "Tag-edit-mode couldn't find any available backends. Try installing kid3-cli or ffmpeg and then call `tag-edit-detect-backend'."))))))
+               (error "Tag-edit-mode couldn't find any available backends. Try installing kid3-cli or ffmpeg and then call `tag-edit-detect-backend'"))))))
 
 (defun tag-edit-backend-read-function (&optional backend)
   "Get the function used to read the tags of a file. If BACKEND is
@@ -480,7 +493,7 @@ backup directory relative to that directory."
       (when tag-edit-backup-directory
         (format-time-string (expand-file-name tag-edit-backup-directory (if (file-directory-p file)
                                                                             file
-                                                                            (file-name-directory file)))))))
+                                                                          (file-name-directory file)))))))
 
 (defun tag-edit-write-file-tags ()
   "Write the tags for the file at point.
@@ -492,7 +505,7 @@ See also: `tag-edit-write-all-file-tags',
          (tags (tag-edit-tags-at-point))
          (file (tag-edit-file-at-point)))
     (when-let ((backup-dir (tag-edit--backup-directory file)))
-      (message "Backing up %s to %s..." file backup-dir)
+      (message "Backing up %S to %S..." file backup-dir)
       (make-directory backup-dir t)
       (copy-file file (concat backup-dir (file-name-nondirectory file))))
     (funcall (tag-edit-backend-write-function) file tags)
@@ -504,11 +517,10 @@ See also: `tag-edit-write-all-file-tags',
   (goto-char (point-min))
   (if (search-forward (concat "file: " file) nil t)
       (beginning-of-line)
-      (user-error "Could not find file %s in the current buffer." file)))
+    (user-error "Could not find file %S in the current buffer" file)))
 
 (defun tag-edit-goto-file-index (n)
-  "Move point to the Nth file in the current buffer, counting from
-0."
+  "Move point to the Nth file in the current buffer, zero-indexed."
   (if-let ((tags (gethash n tag-edit-files-original-tags)))
       (progn (goto-char (point-min))
              (search-forward-regexp "^file: " nil t (1+ n)))
@@ -523,7 +535,7 @@ See also: `tag-edit-write-all-file-tags',
            (dolist (key keys-1 t)
              (unless (string= (cadr (assoc key tags-1))
                               (cadr (assoc key tags-2)))
-               (message "Key %s differs: tag-1: %s; tag-2: %s" key (cadr (assoc key tags-1)) (cadr (assoc key tags-2)))
+               (message "Key %S differs: tag-1: %S; tag-2: %S" key (cadr (assoc key tags-1)) (cadr (assoc key tags-2)))
                (cl-return-from tag-compare nil)))))))
 
 (defun tag-edit-write-all-file-tags ()
@@ -545,10 +557,9 @@ See also: `tag-edit-write-file-tags',
               (file (nth index files)))
           (tag-edit-goto-file-index index)
           (if (tag-edit-tags-equivalent (tag-edit-tags-at-point) (tag-edit-original-tags-at-point))
-              (message "No changes for file %d of %d, %s" index+1 num-keys file)
-              (progn
-                (message "Writing tag for file %d of %d, %s" index+1 num-keys file)
-                (tag-edit-write-file-tags)))))))
+              (message "No changes for file %d/%d, %S" index+1 num-keys file)
+            (message "Writing tags for file %d/%d, %S" index+1 num-keys file)
+            (tag-edit-write-file-tags))))))
   (set-buffer-modified-p nil)
   (setq tag-edit-unsaved-files nil))
 
@@ -579,7 +590,7 @@ See also: `tag-edit-revert-file-tags',
 (defun tag-edit-toggle-file-visibility () ; FIX: implement
   "Toggle the visibility of the tags of the file at point."
   (interactive)
-  (user-error "`tag-edit-toggle-file-visibility' is not yet implemented."))
+  (user-error "`tag-edit-toggle-file-visibility' is not yet implemented"))
 
 (defun tag-edit-next-field (&optional n)
   "Go to the Nth next field in the buffer.
@@ -642,7 +653,9 @@ See also: `tag-edit-stop-preview'"
                               (ignore process)
                               (when (string= "finished\n" event)
                                 (setq tag-edit-preview-file-process nil))))
-      (message "Previewing %s. Call `tag-edit-stop-preview' or press %s on this file again to stop." file (key-description (where-is-internal 'tag-edit-preview-file tag-edit-mode-map t))))))
+      (message "Previewing %S. Call `tag-edit-stop-preview' or press %S on this file again to stop."
+               (file-name-nondirectory file)
+               (key-description (where-is-internal 'tag-edit-preview-file tag-edit-mode-map t))))))
 
 (defun tag-edit-open-file-in-external-editor (&optional file editor)
   "Open FILE (or the file under point if not specified) in EDITOR,
@@ -669,10 +682,13 @@ the number of directory replacements done as its second."
                                (progn
                                  (setq replacements (1+ replacements))
                                  (directory-files file t "^[^.]"))
-                               (list file)))
+                             (list file)))
                          files)
                  replacements))))
-    (let* ((buffer (generate-new-buffer "*tag-edit*")) ; FIX: more descriptive buffer name?
+    ;; FIX: come up with a more descriptive tag-edit-mode buffer name
+    ;; FIX: also, only generate a new buffer if we're not already in a tag-edit-mode buffer
+    ;; (...i.e. for `tag-edit-from-script')
+    (let* ((buffer (generate-new-buffer "*tag-edit*"))
            (files (ensure-list files))
            (files (car (remap-dirs-to-contents files)))
            (files (if recursive-p
@@ -683,10 +699,10 @@ the number of directory replacements done as its second."
                             (setq found (cadr result)
                                   files (car result))))
                         files)
-                      files))
+                    files))
            (files (if tag-edit-ignore-files-function
                       (cl-remove-if tag-edit-ignore-files-function files)
-                      files)))
+                    files)))
       (with-current-buffer buffer
         (tag-edit-buffer-insert-files files)
         (tag-edit-mode)
@@ -710,56 +726,56 @@ See also: `tag-edit-files', `tag-edit-file', `tag-edit'"
   (let ((directory-p (file-directory-p directory-or-file)))
     (tag-edit-files (if directory-p
                         directory-or-file
-                        (file-name-directory directory-or-file)))
+                      (file-name-directory directory-or-file)))
     (unless directory-p
       (tag-edit-goto-file directory-or-file))))
 
 (defun tag-edit (&optional files)
   "Edit the tags of FILES. If no files are provided, attempt to \"do
 what you mean\"; editing either the marked files or file at point
-if we're in a dired buffer, or prompting the user for a file if
+if we're in a Dired buffer, or prompting the user for a file if
 we're not.
 
 See also: `tag-edit-files', `tag-edit-file', `tag-edit-directory'"
   (interactive)
   (if files
       (tag-edit-files files)
-      (if (eql 'dired-mode major-mode)
-          (tag-edit-dired)
-          (call-interactively 'tag-edit-files))))
+    (if (eql 'dired-mode major-mode)
+        (tag-edit-dired)
+      (call-interactively 'tag-edit-files))))
 
-;;; dired extensions
+;;; Dired extensions
 
 (defun tag-edit-dired-marked ()
-  "Run `tag-edit' on the files marked in this dired buffer.
+  "Run `tag-edit' on the files marked in this Dired buffer.
 
 See also: `tag-edit-dired-file-at-point', `tag-edit-dired', `tag-edit'"
   (interactive)
   (let ((files (dired-get-marked-files)))
     (when (zerop (length files))
-      (error "No files marked."))
+      (user-error "No files marked"))
     (tag-edit files)))
 
 (defun tag-edit-dired-file-at-point ()
-  "Run `tag-edit' on the file at point in this dired buffer.
+  "Run `tag-edit' on the file at point in this Dired buffer.
 
 See also: `tag-edit-dired-marked', `tag-edit-dired', `tag-edit'"
   (interactive)
   (if-let ((file (dired-file-name-at-point)))
       (tag-edit (list file))
-    (error "No file at point.")))
+    (user-error "No file at point")))
 
 (defun tag-edit-dired ()
-  "Edit the tags of the files marked in this dired buffer, or if
+  "Edit the tags of the files marked in this Dired buffer, or if
 none are marked, edit the tags of the file at point.
 
 See also: `tag-edit-dired-marked', `tag-edit-dired-file-at-point', `tag-edit'"
   (interactive)
   (if (dired-get-marked-files)
       (tag-edit-dired-marked)
-      (if (dired-file-name-at-point)
-          (tag-edit-dired-file-at-point)
-          (error "No marked files, nor any file at point."))))
+    (if (dired-file-name-at-point)
+        (tag-edit-dired-file-at-point)
+      (user-error "No marked files, nor any file at point"))))
 
 ;;; header
 
