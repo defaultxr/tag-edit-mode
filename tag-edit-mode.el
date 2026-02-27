@@ -236,7 +236,7 @@ data at INDEX in the buffer's data."
       (apply #'narrow-to-region (tag-edit-tags-at-point-region))
       (goto-char (point-min))
       (let (result)
-        (while (search-forward-regexp (concat tag-edit-tag-name-regexp "\\(.+\\)$") nil t)
+        (while (search-forward-regexp (concat tag-edit-tag-name-regexp "\\(.*\\)$") nil t)
           (push (list (match-string-no-properties 1)
                       (match-string-no-properties 2))
                 result))
