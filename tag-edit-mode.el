@@ -275,7 +275,7 @@ their values using kid3-cli."
   (let ((file (expand-file-name file)))
     (with-temp-buffer
       ;; FIX: check if kid3-cli exits with a non-zero status?
-      (call-process "kid3-cli" nil (current-buffer) nil "-c" "select" file "-c" "{\"method\":\"get\"}")
+      (call-process "kid3-cli" nil (list (current-buffer) nil) nil "-c" "select" file "-c" "{\"method\":\"get\"}")
       (goto-char (point-min))
       (when-let* ((json (json-parse-buffer))
                   (tagged-file (gethash "taggedFile" (gethash "result" json)))
@@ -319,7 +319,7 @@ See also: `tag-edit-write-file-tags'"
 their values using ffprobe (ffmpeg)."
   (let ((file (expand-file-name file)))
     (with-temp-buffer
-      (call-process "ffprobe" nil (current-buffer) nil "-v" "quiet" "-print_format" "json" "-show_format" "-show_streams" file)
+      (call-process "ffprobe" nil (list (current-buffer) nil) nil "-v" "quiet" "-print_format" "json" "-show_format" "-show_streams" file)
       (goto-char (point-min))
       (when-let* ((data (json-parse-buffer))
                   (format (gethash "format" data))
