@@ -6,7 +6,7 @@
 ;; Homepage: https://github.com/defaultxr/tag-edit-mode
 ;; Keywords: files, multimedia, tools
 ;; Version: 0.5
-;; Package-Requires: ((emacs "24.4") cl-lib)
+;; Package-Requires: ((emacs "24.4") cl-lib f s)
 
 ;; This file is not part of GNU Emacs.
 
@@ -63,6 +63,8 @@
 ;;; requirements
 
 (require 'cl-lib)
+(require 'f) ; for `f-common-parent' - not sure if there's a better (built-in) function for this.
+(require 's) ; for `s-replace', `s-contains-p', `s-split-up-to'
 
 ;;; customization
 
