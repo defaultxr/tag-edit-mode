@@ -99,8 +99,8 @@ being saved, and can include `format-time-string' format codes."
   :group 'tag-edit)
 
 (defcustom tag-edit-debug-log-path nil
-  "Where debug logs from external programs (such as ffmpeg) should
-be written, or nil to avoid writing logs."
+  "Where debug output from external programs (such as ffmpeg) should
+be written, or nil to not write logs and just discard debug output."
   :type '(or null file)
   :group 'tag-edit)
 
@@ -126,6 +126,17 @@ does not apply when saving tags for the entire buffer."
 
 (defvar tag-edit-tag-name-regexp "^\\([^:]+\\): "
   "The regular expression matching the names of tags in the buffer.")
+
+(defun tag-edit--call-process-destination (&optional stdout)
+  "Generate a form for the destination argument of `call-process', based on
+the user's `tag-edit-debug-log-path' setting and the provided STDOUT. If
+STDOUT is provided, send the process's output to the specified location,
+and stderr to the `tag-edit-debug-log-path'. If STDOUT is not provided,
+send all of the process's output to the `tag-edit-debug-log-path'."
+  (if stdout
+      (list stdout tag-edit-debug-log-path)
+    (when tag-edit-debug-log-path
+      (list :file tag-edit-debug-log-path))))
 
 (defun tag-edit-file-tags (file)
   "Get an alist mapping the names of all tags detected in FILE to their values."
@@ -269,7 +280,7 @@ their values using kid3-cli."
   (let ((file (expand-file-name file)))
     (with-temp-buffer
       ;; FIX: check if kid3-cli exits with a non-zero status?
-      (call-process "kid3-cli" nil (list (current-buffer) nil) nil "-c" "select" file "-c" "{\"method\":\"get\"}")
+      (call-process "kid3-cli" nil (tag-edit--call-process-destination (current-buffer)) nil "-c" "select" file "-c" "{\"method\":\"get\"}")
       (goto-char (point-min))
       (when-let* ((json (json-parse-buffer))
                   (tagged-file (gethash "taggedFile" (gethash "result" json)))
@@ -303,7 +314,7 @@ See also: `tag-edit-write-file-tags'"
     (when output-file
       (copy-file file output-file))
     (lwarn 'tag-edit :debug "Writing %S tag with kid3-cli; args: %S" write-file kid3-cli-args)
-    (apply #'call-process "kid3-cli" nil "*kid3-cli-output*" nil kid3-cli-args)
+    (apply #'call-process "kid3-cli" nil (tag-edit--call-process-destination) nil kid3-cli-args)
     (unless (string= output-file (cadr (assoc "file" original-tags))))))
 
 ;;; ffmpeg
@@ -313,7 +324,7 @@ See also: `tag-edit-write-file-tags'"
 their values using ffprobe (ffmpeg)."
   (let ((file (expand-file-name file)))
     (with-temp-buffer
-      (call-process "ffprobe" nil (list (current-buffer) nil) nil "-v" "quiet" "-print_format" "json" "-show_format" "-show_streams" file)
+      (call-process "ffprobe" nil (tag-edit--call-process-destination (current-buffer)) nil "-v" "quiet" "-print_format" "json" "-show_format" "-show_streams" file)
       (goto-char (point-min))
       (when-let* ((data (json-parse-buffer))
                   (format (gethash "format" data))
@@ -329,7 +340,7 @@ ffmetadata."
   (let* ((file (expand-file-name file))
          (ffmetadata-file (make-temp-file "tag-edit-mode-ffmetadata-tmp-" nil ".txt"))
          result)
-    (call-process "ffmpeg" nil nil nil "-y" "-i" file "-f" "ffmetadata" ffmetadata-file)
+    (call-process "ffmpeg" nil (tag-edit--call-process-destination) nil "-y" "-i" file "-f" "ffmetadata" ffmetadata-file)
     (with-temp-buffer
       (insert-file-contents-literally ffmetadata-file)
       (while (/= (point-max) (point))
@@ -358,7 +369,7 @@ See also: `tag-edit-write-file-tags-with-ffmpeg-ffmetadata'"
          (output-file (or output-file file))
          (replace-p (string= file output-file))
          (temp-file-name (concat (file-name-directory output-file) ".out-" (file-name-nondirectory output-file))))
-    (apply #'call-process "ffmpeg" nil tag-edit-debug-log-path nil
+    (apply #'call-process "ffmpeg" nil (tag-edit--call-process-destination) nil
            `(;; "-v" "quiet" ; verbosity
              "-i" ,file ; input file
              "-map" "0" ; do not alter the media content
@@ -394,7 +405,7 @@ See also: `tag-edit-write-file-tags-with-ffmpeg-args'"
   (let ((ffmetadata-file (make-temp-file "tag-edit-mode-ffmetadata-tmp-" nil ".txt")))
     ffmetadata-file
     (tag-edit-write-ffmpeg-metadata-txt tags ffmetadata-file)
-    (call-process "ffmpeg" "-i" file "-f" "ffmetadata" ffmetadata-file)
+    (call-process "ffmpeg" nil (tag-edit--call-process-destination) nil "-i" file "-f" "ffmetadata" ffmetadata-file)
     (delete-file ffmetadata-file)))
 
 (defun tag-edit-write-file-tags-with-ffmpeg (file tags &optional output-file)
@@ -413,7 +424,7 @@ TAGS are changed. A tag is removed if its value in TAGS is empty.
 See also: `tag-edit-write-file-tags-with-ffmpeg-args'"
   (let ((metadata-file "/tmp/metadata-out.txt"))
     (tag-edit-write-ffmpeg-metadata-txt tags metadata-file)
-    (call-process "ffmpeg" nil (current-buffer) nil
+    (call-process "ffmpeg" nil (tag-edit--call-process-destination) nil
                   "-v" "quiet" ; verbosity
                   "-i" file ; input file
                   "-map" "0" ; do not alter the media content
