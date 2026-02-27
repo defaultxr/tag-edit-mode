@@ -6,9 +6,9 @@ An Emacs major mode to edit file tags (id3, vorbis, etc). Quickly and easily edi
 
 *WARNING:* This is currently beta-quality software; if you use it, you're using it at your own risk!
 
-Even though tag-edit-mode has an option to make backups (~tag-edit-backup-directory~), you should still make your own backups of any files you care about.
+Even though tag-edit-mode has an option to make backups (~tag-edit-backup-directory~), you may still want to make your own backups of any files you care about before editing them.
 
-*NOTE:* Currently, tag-edit-mode only supports one set of tags per file. So if a file has both id3v1 and id3v2, only id3v2 is read. If a file only has id3v1, id3v1 is read, but id3v2 is written.
+*NOTE:* Currently, tag-edit-mode only supports one set of tags per file. If a file has both id3v1 and id3v2, only id3v2 will be read and shown. If a file has only id3v1, the id3v1 will be read, but only id3v2 will be written, and the id3v1 tag will be left unmodified.
 
 * Features
 
@@ -21,9 +21,24 @@ Even though tag-edit-mode has an option to make backups (~tag-edit-backup-direct
 
 Ensure you have ~kid3-cli~ or ~ffmpeg~ installed and in your ~$PATH~, since tag-edit-mode currently requires one of them in order to read and write tags.
 
-After installing tag-edit-mode by putting its directory in your ~load-path~, type ~M-: (require 'tag-edit-mode) RET~ to load it.
+The recommended way to install tag-edit-mode is with ~use-package~, which is built in to all recent versions of Emacs. If your Emacs doesn't include ~use-package~, it probably won't be able to run tag-edit-mode.
 
-# FIX: Maybe also add instructions for adding to init.el.
+Here's an example ~use-package~ configuration that will download and install tag-edit-mode for you with [[https://github.com/radian-software/straight.el][straight.el]]:
+
+#+begin_src emacs-lisp
+  (use-package tag-edit-mode
+    :straight (tag-edit-mode :type git :host github :repo "defaultxr/tag-edit-mode")
+    :custom
+    (tag-edit-debug-log-path "/tmp/tag-edit-debug-output.txt"))
+#+end_src
+
+Obviously, the ~:straight~ stanza will only work if you have straight.el installed.
+
+If you don't have straight.el, you'll have to clone the repo, and then replace the ~:straight~ stanza with a ~:load-path~ stanza specifying the path to the directory you cloned tag-edit-mode to.
+
+The ~tag-edit-debug-log-path~ custom variable specifies where tag-edit-mode should send debug output from external programs that it calls (i.e. ~ffmpeg~ and ~kid3-cli~). This variable defaults to ~nil~, meaning to discard debug output, but having it set will allow you to provide more information if you need to submit a bug report to tag-edit-mode. The log file is overwritten each time an external program is invoked, so there is minimal risk of the file becoming too large.
+
+# FIX: maybe suggest setting tag-edit-ignore-files-function in init.el
 
 * Usage
 
