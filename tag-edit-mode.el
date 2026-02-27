@@ -73,11 +73,6 @@
   :group 'external
   :prefix "tag-edit-")
 
-(defcustom tag-edit-standard-tags (list "file" "title" "artist" "album" "comment" "date" "track" "genre" "album_artist")
-  "Ordered list of tag names that should always be shown for files."
-  :type '(list)
-  :group 'tag-edit)
-
 (defcustom tag-edit-remove-tags nil ; FIX: implement
   "List of tags that should not be shown for files, and will be
 removed from them if the file's tags are written."
@@ -195,11 +190,8 @@ data at INDEX in the buffer's data."
       (insert "-- failed to get tags for " file ":\n")
       (setq file-tags (list (list "file" file))))
     (puthash index file-tags tag-edit-files-original-tags)
-    (dolist (tag tag-edit-standard-tags)
-      (tag-edit-buffer-insert-tag tag (cadr (assoc tag file-tags))))
     (dolist (tag file-tags)
-      (unless (cl-find (car tag) tag-edit-standard-tags :test #'string=)
-        (tag-edit-buffer-insert-tag (car tag) (cadr tag))))
+      (tag-edit-buffer-insert-tag (car tag) (cadr tag)))
     (insert "\n")))
 
 (defun tag-edit-buffer-insert-files (files)
