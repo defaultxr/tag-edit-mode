@@ -206,8 +206,10 @@ data at INDEX in the buffer's data."
   "Write the templates for FILES in the current buffer."
   (unless tag-edit-files-original-tags
     (setq tag-edit-files-original-tags (make-hash-table)))
-  (let ((num 0))
+  (let ((num-files (length files))
+        (num 0))
     (dolist (file files)
+      (message "Reading file %d/%d: %S" (1+ num) num-files file)
       (tag-edit-buffer-insert-file file num)
       (setq num (1+ num))))
   (tag-edit-update-header))
